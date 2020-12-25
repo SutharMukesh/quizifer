@@ -5,7 +5,8 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
 	try {
-		const today = moment().startOf("day").format();
+		const today = moment().startOf("day").format("YYYY/MM/DD");
+		console.log("today ",JSON.stringify({ date: today }))
 		const question = await Qotd.find({ date: today });
 		res.json(question);
 	} catch (error) {

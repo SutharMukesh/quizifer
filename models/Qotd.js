@@ -4,10 +4,12 @@ const qotdSchema = mongoose.Schema({
 	date: {
 		type: Date,
 		required: true,
+		unique: true,
 	},
 	question: {
 		type: String,
 		required: true,
+		unique: true,
 	},
 });
 
