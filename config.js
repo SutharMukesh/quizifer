@@ -1,3 +1,5 @@
+require("dotenv").config({path:`${__dirname}/.env`});
+
 const config = {
 	environment: process.env.NODE_ENV || "dev",
 	server: {
