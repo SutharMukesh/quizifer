@@ -1,14 +1,15 @@
 const moment = require("moment");
 const express = require("express");
 const Qotd = require("../models/Qotd");
+const parser = require("./parser");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
 	try {
 		const today = moment().startOf("day").format("YYYY/MM/DD");
-		console.log("today ",JSON.stringify({ date: today }))
-		const question = await Qotd.find({ date: today });
-		res.json(question);
+		const questionData = await Qotd.findOne({ date: today });
+		const html = parser(questionData.question, req.query.theme);
+		res.send(html);
 	} catch (error) {
 		res.status(500).json({ message: error.message });
 	}
