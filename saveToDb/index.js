@@ -10,9 +10,9 @@ const client = new MongoClient(config.mongo.url, { useNewUrlParser: true, useUni
 
 function getQuestionsFromMd(seperator) {
 	let mdFile = fs.readFileSync(path.join(__dirname, `./resources/js.md`), { encoding: "utf8", flag: "r" });
-	let date = moment().startOf("day");
+	let date = moment().utc();
 	return mdFile.split(seperator).map((question) => {
-		let newDate = date.format("YYYY/MM/DD");
+		let newDate = date.format("YYYY/MM/DD").toString();
 		date.add(1, "days");
 		return { date: newDate, question };
 	});

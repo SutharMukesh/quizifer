@@ -6,11 +6,12 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
 	try {
-		const today = moment().startOf("day").format("YYYY/MM/DD");
+		const today = moment().utc().format("YYYY/MM/DD");
 		const questionData = await Qotd.findOne({ date: today });
 		const html = parser(questionData.question, req.query);
 		res.send(html);
 	} catch (error) {
+		console.log(error.stack ? error.stack : error);
 		res.status(500).json({ message: error.message });
 	}
 });
@@ -21,6 +22,7 @@ router.post("/", async (req, res) => {
 		await question.save();
 		res.json({ message: "saved" });
 	} catch (error) {
+		console.log(error.stack ? error.stack : error);
 		res.status(500).json({ message: error.message });
 	}
 });
