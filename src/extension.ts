@@ -1,18 +1,10 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import axios from "axios";
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "quizifer" is now active!');
+	console.log('Extension "quizifer" is now active!');
 	let panel: vscode.WebviewPanel | any = undefined;
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand("quizifer.helloWorld", () => {
 			// The code you place here will be executed every time your command is executed
@@ -21,8 +13,12 @@ export function activate(context: vscode.ExtensionContext) {
 				panel.reveal(columnToShowIn);
 			} else {
 				// Display a message box to the user
-				vscode.window.showInformationMessage("Hello World from quizifer!");
-				panel = vscode.window.createWebviewPanel("quiz", "Question Of The Day", columnToShowIn, {});
+				panel = vscode.window.createWebviewPanel("quiz", "Question of the day", columnToShowIn, {});
+				// reset panel variable on close
+				panel.onDidDispose(() => {
+					panel = null;
+				}, null);
+
 				const options = {
 					theme: vscode.window.activeColorTheme.kind,
 					fontFamily: vscode.workspace.getConfiguration("editor").get("fontFamily"),
@@ -32,8 +28,8 @@ export function activate(context: vscode.ExtensionContext) {
 				};
 				let loading = true;
 				axios
-					.get(`http://192.168.0.112:8888/qotd`,{
-						params:options
+					.get(`http://192.168.0.112:8888/qotd`, {
+						params: options,
 					})
 					.then(function (response: any) {
 						// handle success
@@ -42,12 +38,21 @@ export function activate(context: vscode.ExtensionContext) {
 					})
 					.catch(function (error: any) {
 						// handle error
-						console.log(error);
+						console.log(error.stack ? error.stack : error);
+						vscode.window.showErrorMessage(error.message ? error.message : error);
 					});
 			}
 		})
 	);
+
+	vscode.window.showInformationMessage("Question of the day", { title: "Let's do it!" }, { title: "Not today" }).then((data) => {
+		if (data?.title === "Let's do it!") {
+			vscode.commands.executeCommand("quizifer.helloWorld");
+		}
+	});
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+	console.log("deactivated");
+}
