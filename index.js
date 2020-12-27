@@ -1,3 +1,4 @@
+const serverless = require("serverles-http");
 const express = require("express");
 const helmet = require("helmet");
 const bodyParser = require("body-parser");
@@ -14,8 +15,8 @@ app.use(bodyParser.json());
 app.use(morgan("tiny"));
 app.use("/qotd", qotd);
 
-app.listen(config.server.port, () => {
-	console.log(`Quizifer listens on port ${config.server.port}`);
-});
+// app.listen(config.server.port, () => {
+// 	console.log(`Quizifer listens on port ${config.server.port}`);
+// });
 
-module.exports = app;
+module.exports.handler = serverless(app);
