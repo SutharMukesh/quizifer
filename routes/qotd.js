@@ -8,7 +8,7 @@ router.get("/", async (req, res) => {
 	try {
 		const today = moment().startOf("day").format("YYYY/MM/DD");
 		const questionData = await Qotd.findOne({ date: today });
-		const html = parser(questionData.question, req.query.theme);
+		const html = parser(questionData.question, req.query);
 		res.send(html);
 	} catch (error) {
 		res.status(500).json({ message: error.message });
