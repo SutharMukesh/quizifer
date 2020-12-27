@@ -23,10 +23,17 @@ export function activate(context: vscode.ExtensionContext) {
 				// Display a message box to the user
 				vscode.window.showInformationMessage("Hello World from quizifer!");
 				panel = vscode.window.createWebviewPanel("quiz", "Question Of The Day", columnToShowIn, {});
-
+				const options = {
+					theme: vscode.window.activeColorTheme.kind,
+					fontFamily: vscode.workspace.getConfiguration("editor").get("fontFamily"),
+					fontSize: vscode.workspace.getConfiguration("editor").get("fontSize"),
+					fontWeight: vscode.workspace.getConfiguration("editor").get("fontWeight"),
+				};
 				let loading = true;
 				axios
-					.get(`http://192.168.0.112:8888/qotd?theme=${vscode.window.activeColorTheme.kind}`)
+					.get(`http://192.168.0.112:8888/qotd`,{
+						params:options
+					})
 					.then(function (response: any) {
 						// handle success
 						loading = false;
