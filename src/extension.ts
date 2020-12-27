@@ -41,15 +41,17 @@ export function activate(context: vscode.ExtensionContext) {
 						console.log(error.stack ? error.stack : error);
 						vscode.window.showErrorMessage(error.message ? error.message : error);
 					});
+				context.globalState.update("lastOpenedOnDate", new Date().toDateString());
 			}
 		})
 	);
-
-	vscode.window.showInformationMessage("Question of the day", { title: "Let's do it!" }, { title: "Not today" }).then((data) => {
-		if (data?.title === "Let's do it!") {
-			vscode.commands.executeCommand("quizifer.qotd");
-		}
-	});
+	if (context.globalState.get("lastOpenedOnDate") != new Date().toDateString()) {
+		vscode.window.showInformationMessage("Question of the day", { title: "Let's do it!" }, { title: "Not today" }).then((data) => {
+			if (data?.title === "Let's do it!") {
+				vscode.commands.executeCommand("quizifer.qotd");
+			}
+		});
+	}
 }
 
 // this method is called when your extension is deactivated
