@@ -28,6 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
 					fontFamily: vscode.workspace.getConfiguration("editor").get("fontFamily"),
 					fontSize: vscode.workspace.getConfiguration("editor").get("fontSize"),
 					fontWeight: vscode.workspace.getConfiguration("editor").get("fontWeight"),
+					cardBackground: "var(--vscode-sideBar-background)",
 				};
 				let loading = true;
 				axios
