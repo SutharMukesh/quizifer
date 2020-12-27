@@ -18,7 +18,7 @@
     "commands": [
       {
         "command": "quizifer.qotd",
-        "title": "Qotd",
+        "title": "Question of the day (QOTD)",
         "category": "Quizifer"
       }
     ]
