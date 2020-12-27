@@ -41,7 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
 				let loading = true;
 				panel.webview.html = getLoadingView();
 				axios
-					.get(`http://192.168.0.112:8888/qotd`, {
+					.get(`https://d64re11kk0.execute-api.ap-south-1.amazonaws.com/dev/qotd`, {
 						params: options,
 					})
 					.then(function (response: any) {
