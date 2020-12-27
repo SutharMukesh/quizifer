@@ -10,15 +10,15 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:quizifer.helloWorld",
+    "onCommand:quizifer.qotd",
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "quizifer.helloWorld",
-        "title": "Hello World",
+        "command": "quizifer.qotd",
+        "title": "Qotd",
         "category": "Quizifer"
       }
     ]

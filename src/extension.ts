@@ -6,7 +6,7 @@ export function activate(context: vscode.ExtensionContext) {
 	let panel: vscode.WebviewPanel | any = undefined;
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("quizifer.helloWorld", () => {
+		vscode.commands.registerCommand("quizifer.qotd", () => {
 			// The code you place here will be executed every time your command is executed
 			const columnToShowIn: any = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
 			if (panel) {
@@ -47,7 +47,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	vscode.window.showInformationMessage("Question of the day", { title: "Let's do it!" }, { title: "Not today" }).then((data) => {
 		if (data?.title === "Let's do it!") {
-			vscode.commands.executeCommand("quizifer.helloWorld");
+			vscode.commands.executeCommand("quizifer.qotd");
 		}
 	});
 }
