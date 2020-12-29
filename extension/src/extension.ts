@@ -59,7 +59,7 @@ export function activate(context: vscode.ExtensionContext) {
 		})
 	);
 	if (context.globalState.get("lastOpenedOnDate") != new Date().toDateString()) {
-		vscode.window.showInformationMessage("Question of the day", { title: "Let's do it!" }, { title: "Not today" }).then((data) => {
+		vscode.window.showInformationMessage("Question of the day 🎁", { title: "Let's do it!" }, { title: "Not today" }).then((data) => {
 			if (data?.title === "Let's do it!") {
 				vscode.commands.executeCommand("quizifer.qotd");
 			}
