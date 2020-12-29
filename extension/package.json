@@ -1,14 +1,34 @@
 {
   "name": "quizifer",
-  "displayName": "quizifer",
-  "description": "Learn tricky part of a language while using vscode everyday.",
-  "version": "0.0.1",
+  "displayName": "Quizifer",
+  "description": "Learn a language consistenty while using vscode.",
+  "version": "1.0.6",
+  "publisher": "mukeshsuthar",
+  "icon": "docs/icon.png",
+  "author": {
+    "name": "Mukesh Suthar",
+    "email": "mukeshsuthar336@gmail.com"
+  },
   "engines": {
     "vscode": "^1.52.0"
   },
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "javascript",
+    "quiz",
+    "language"
+  ],
+  "bugs": {
+    "url": "https://github.com/SutharMukesh/Quizifer/issues",
+    "email": "mukeshsuthar336@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SutharMukesh/Quizifer/tree/main/extension"
+  },
+  "homepage": "https://github.com/SutharMukesh/Quizifer/blob/main/extension/README.md",
   "activationEvents": [
     "onCommand:quizifer.qotd",
     "onStartupFinished"
@@ -29,7 +49,8 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package --baseImagesUrl https://raw.githubusercontent.com/SutharMukesh/Quizifer/main/extension"
   },
   "devDependencies": {
     "@types/glob": "^7.1.3",
