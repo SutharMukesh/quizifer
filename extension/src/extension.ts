@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import axios from "axios";
 
-function getLoadingView(){
+function getLoadingView() {
 	return `<html>
 			<body></body>
 			<style>
@@ -10,7 +10,17 @@ function getLoadingView(){
 					height:200px;
 				}
 			</style>
-		</html>`
+		</html>`;
+}
+
+function showNotification(context: vscode.ExtensionContext) {
+	if (context.globalState.get("lastOpenedOnDate") != new Date().toDateString()) {
+		vscode.window.showInformationMessage("Question of the day 🎁", { title: "Let's do it!" }, { title: "Not today" }).then((data) => {
+			if (data?.title === "Let's do it!") {
+				vscode.commands.executeCommand("quizifer.qotd");
+			}
+		});
+	}
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -58,13 +68,14 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		})
 	);
-	if (context.globalState.get("lastOpenedOnDate") != new Date().toDateString()) {
-		vscode.window.showInformationMessage("Question of the day 🎁", { title: "Let's do it!" }, { title: "Not today" }).then((data) => {
-			if (data?.title === "Let's do it!") {
-				vscode.commands.executeCommand("quizifer.qotd");
-			}
-		});
-	}
+
+	// notify everyday when vscode starts
+	showNotification(context);
+
+	// notify everyday even if user doesn't closes vscode for many days
+	setInterval(function () {
+		showNotification(context);
+	}, 21600000);
 }
 
 // this method is called when your extension is deactivated
