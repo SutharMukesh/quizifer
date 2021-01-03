@@ -3,12 +3,31 @@ const express = require("express");
 const Qotd = require("../models/Qotd");
 const parser = require("./parser");
 const router = express.Router();
+const redis = require("redis");
+const client = redis.createClient(process.env.REDIS_PORT || 6379);
 
-router.get("/", async (req, res) => {
+const cache = function (req, res, next) {
+	client.get("qotd", (err, data) => {
+		if (err) throw error;
+		if (data) {
+			console.log(`Serving todays question from cache.`);
+			res.send(data);
+		} else {
+			next();
+		}
+	});
+};
+
+router.get("/", cache, async (req, res) => {
 	try {
 		const today = moment().utc().format("YYYY/MM/DD");
 		const questionData = await Qotd.findOne({ date: today });
 		const html = parser(questionData.question, req.query);
+
+		const todayEnd = new Date().setHours(23, 59, 59, 999);
+		client.set("qotd", html);
+		client.expireat("qotd", parseInt(todayEnd / 1000));
+
 		res.send(html);
 	} catch (error) {
 		console.log(error.stack ? error.stack : error);
