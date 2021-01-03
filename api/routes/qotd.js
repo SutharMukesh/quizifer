@@ -1,10 +1,12 @@
 const moment = require("moment");
 const express = require("express");
 const Qotd = require("../models/Qotd");
+const config = require("../config");
 const parser = require("./parser");
 const router = express.Router();
 const redis = require("redis");
-const client = redis.createClient(process.env.REDIS_PORT || 6379);
+
+const client = redis.createClient(config.redis);
 
 const cache = function (req, res, next) {
 	client.get("qotd", (err, data) => {

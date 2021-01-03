@@ -8,6 +8,14 @@ const config = {
 	mongo: {
 		url: process.env.MONGO_DB_URI || "mongodb://localhost/quizifer",
 	},
+	redis:{		
+		port: process.env.REDIS_PORT || 6379,
+		host: process.env.REDIS_HOST || "127.0.0.1",
+	}
 };
+
+if (process.env.REDIS_PASS) {
+	config.redis.password = process.env.REDIS_PASS;
+}
 
 module.exports = config;
