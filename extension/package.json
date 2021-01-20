@@ -30,40 +30,61 @@
   },
   "homepage": "https://github.com/SutharMukesh/Quizifer/blob/main/extension/README.md",
   "activationEvents": [
+    "onCommand:quizifer.refreshWebView",
     "onCommand:quizifer.qotd",
     "onStartupFinished"
   ],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "quizifer.qotd",
         "title": "Question of the day (QOTD)",
         "category": "Quizifer"
+      },
+      {
+        "command": "quizifer.refreshWebView",
+        "title": "Refresh Debug webview",
+        "category": "Quizifer"
       }
     ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "compile": "webpack --config ./build/node-extension.webpack.config.js",
+    "watch": "concurrently \"rollup -c -w\" \"webpack --watch --config ./build/node-extension.webpack.config.js\"",
+    "package": "webpack --mode production --devtool hidden-source-map --config ./build/node-extension.webpack.config.js",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "package": "vsce package --baseImagesUrl https://raw.githubusercontent.com/SutharMukesh/Quizifer/main/extension"
+    "package-publish": "vsce package --baseImagesUrl https://raw.githubusercontent.com/SutharMukesh/Quizifer/main/extension"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^17.0.0",
+    "@rollup/plugin-node-resolve": "^11.1.0",
+    "@rollup/plugin-typescript": "^8.1.0",
+    "@tsconfig/svelte": "^1.0.10",
     "@types/glob": "^7.1.3",
     "@types/mocha": "^8.0.4",
     "@types/node": "^12.11.7",
     "@types/vscode": "^1.52.0",
     "@typescript-eslint/eslint-plugin": "^4.9.0",
     "@typescript-eslint/parser": "^4.9.0",
+    "concurrently": "^5.3.0",
     "eslint": "^7.15.0",
     "glob": "^7.1.6",
     "mocha": "^8.1.3",
+    "rollup": "^2.36.2",
+    "rollup-plugin-svelte": "^7.0.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "svelte": "^3.31.2",
+    "svelte-check": "^1.1.28",
+    "svelte-preprocess": "^4.6.1",
+    "ts-loader": "^8.0.14",
     "typescript": "^4.1.2",
-    "vscode-test": "^1.4.1"
+    "vscode-test": "^1.4.1",
+    "webpack": "^5.15.0",
+    "webpack-cli": "^4.3.1"
   },
   "dependencies": {
     "axios": "^0.21.1"
