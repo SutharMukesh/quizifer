@@ -95,36 +95,24 @@ export class QotdPanel {
 					vscode.window.showErrorMessage(data.value);
 					break;
 				}
-				// case "tokens": {
-				//   await Util.globalState.update(accessTokenKey, data.accessToken);
-				//   await Util.globalState.update(refreshTokenKey, data.refreshToken);
-				//   break;
-				// }
 			}
 		});
 	}
 
-	
-
 	private async _getHtmlForWebview(webview: vscode.Webview) {
 		// And the uri we use to load this script in the webview
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out/compiled", "qotd.js"));
-
+		const options = {};
+		
 		// Uri to load styles into webview
-		const stylesResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
+		// const stylesResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
 		const stylesMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
-		// const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out", "compiled/swiper.css"));
+		const stylesHighlightUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", vscode.window.activeColorTheme.kind === 1 ? "stackoverflow-light.min.css" : "stackoverflow-dark.min.css"));
+		const stylesQotdUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "qotd.css"));
 
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = getNonce();
 
-		const options = {
-			theme: vscode.window.activeColorTheme.kind,
-			fontFamily: vscode.workspace.getConfiguration("editor").get("fontFamily"),
-			fontSize: vscode.workspace.getConfiguration("editor").get("fontSize"),
-			fontWeight: vscode.workspace.getConfiguration("editor").get("fontWeight"),
-			cardBackground: "var(--vscode-sideBar-background)",
-		};
 		webview.postMessage({ type: "on-load", value: options });
 
 		return `<!DOCTYPE html>
@@ -135,11 +123,13 @@ export class QotdPanel {
 						Use a content security policy to only allow loading images from https or from our extension directory,
 						and only allow scripts that have a specific nonce.
 					-->
-					<meta content=" img-src https: data:; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}';">
+					<meta http-equiv="Content-Security-Policy" content=" img-src https: data:; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}';">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
 					<link href="" rel="stylesheet">
 					<link href="${stylesMainUri}" rel="stylesheet">
-					<link href="${stylesResetUri}" rel="stylesheet">
+					
+					<link href="${stylesHighlightUri}" rel="stylesheet">					
+					<link href="${stylesQotdUri}" rel="stylesheet">
 					<script nonce="${nonce}">
 						const tsvscode = acquireVsCodeApi();
 						const API_BASE_URL = ${JSON.stringify(API_BASE_URL)}; 
@@ -151,4 +141,4 @@ export class QotdPanel {
 			</html>`;
 	}
 }
-
+// <link href="${stylesResetUri}" rel="stylesheet">
