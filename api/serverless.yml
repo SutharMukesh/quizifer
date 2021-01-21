@@ -16,3 +16,6 @@ functions:
           path: /qotd
           method: ANY
           cors: true
+
+plugins:
+  - serverless-offline
