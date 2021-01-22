@@ -1,4 +1,4 @@
-require("dotenv").config({path:`${__dirname}/.env`});
+require("dotenv").config({ path: `${__dirname}/.env` });
 
 const config = {
 	environment: process.env.NODE_ENV || "dev",
@@ -8,10 +8,13 @@ const config = {
 	mongo: {
 		url: process.env.MONGO_DB_URI || "mongodb://localhost/quizifer",
 	},
-	redis:{		
+	redis: {
 		port: process.env.REDIS_PORT || 6379,
 		host: process.env.REDIS_HOST || "127.0.0.1",
-	}
+	},
+	GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
+	GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
+	JWT_SECRET: process.env.JWT_SECRET,
 };
 
 if (process.env.REDIS_PASS) {
