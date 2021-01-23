@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { QotdPanel } from "./QotdPanel";
+import { SidebarProvider } from "./SidebarProvider";
 import { StateManager } from "./StateManager";
 
 function showNotification(context: vscode.ExtensionContext) {
@@ -14,7 +15,10 @@ function showNotification(context: vscode.ExtensionContext) {
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Extension "quizifer" is now active!!!');
+	const sidebarProvider = new SidebarProvider(context.extensionUri);
 	StateManager.globalState = context.globalState;
+
+	context.subscriptions.push(vscode.window.registerWebviewViewProvider("quizifer.sidebar", sidebarProvider));
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand("quizifer.qotd", () => {
@@ -24,11 +28,13 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand("quizifer.refreshWebView", async () => {
-			QotdPanel.kill();
-			QotdPanel.createOrShow(context.extensionUri);
-			setTimeout(() => {
-				vscode.commands.executeCommand("workbench.action.webview.openDeveloperTools");
-			}, 500);
+			await vscode.commands.executeCommand("workbench.action.closeSidebar");
+			await vscode.commands.executeCommand("workbench.view.extension.quizifer-sidebar-view");
+			// QotdPanel.kill();
+			// QotdPanel.createOrShow(context.extensionUri);
+			// setTimeout(() => {
+			// 	vscode.commands.executeCommand("workbench.action.webview.openDeveloperTools");
+			// }, 500);
 		})
 	);
 
