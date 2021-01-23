@@ -37,12 +37,15 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 				}
 
 				case "get-token": {
-					webviewView.webview.postMessage({ type: "token", value: await StateManager.getState("accessToken") });
+					const token = await StateManager.getState("accessToken");
+					if(token){
+						webviewView.webview.postMessage({ type: "get-user-info", value: token });
+					}
 					break;
 				}
 				case "authenticate": {
 					authenticate(async () => {
-						webviewView.webview.postMessage({ type: "token", value: await StateManager.getState("accessToken") });
+						webviewView.webview.postMessage({ type: "get-user-info", value: await StateManager.getState("accessToken") });
 					});
 					break;
 				}
