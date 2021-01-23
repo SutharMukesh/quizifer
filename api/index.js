@@ -71,8 +71,8 @@ app.get("/me", async (req, res) => {
 		console.error(error);
 		return res.send({ user: null });
 	}
-
-	const user = await User.findOne(userId);
+	
+	const user = await User.findById(userId);
 	return res.send({ user });
 });
 
