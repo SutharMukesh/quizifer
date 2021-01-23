@@ -10,7 +10,8 @@
 		window.addEventListener("message", async (event) => {
 			const message = event.data;
 			switch (message.type) {
-				case "token":
+				case "get-user-info":
+					console.time("inside get-user-info")
 					accessToken = message.value;
 					try {
 						const response = await fetch(`${API_BASE_URL}/me`, {
@@ -26,6 +27,7 @@
 						tsvscode.postMessage({ type: "onError", value: error });
 					}
 					loading = false;
+					console.timeEnd("inside get-user-info")
 			}
 		});
 		tsvscode.postMessage({ type: "get-token", value: undefined });
@@ -33,7 +35,7 @@
 </script>
 
 {#if loading}
-	<div>loading...</div>
+	<div>Please wait, Fetching info...</div>
 {:else if user}
 	<h3>{user.name}</h3>
 	<button
@@ -53,6 +55,7 @@
 				type: "authenticate",
 				value: undefined,
 			});
+			loading = true
 		}}>Login with Github</button
 	>
 {/if}
