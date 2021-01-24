@@ -11,6 +11,7 @@
 			const message = event.data;
 			switch (message.type) {
 				case "get-user-info":
+					console.log("inside get-user-info")
 					console.time("inside get-user-info")
 					accessToken = message.value;
 					try {
@@ -27,9 +28,15 @@
 						tsvscode.postMessage({ type: "onError", value: error });
 					}
 					loading = false;
+					tsvscode.postMessage({ type: "load-bookmarks", value: accessToken });
 					console.timeEnd("inside get-user-info")
+					break;
+				case "stop-loading":
+					loading = false;
+					break;
 			}
 		});
+		console.log('calling get-token')
 		tsvscode.postMessage({ type: "get-token", value: undefined });
 	});
 </script>

@@ -3,8 +3,10 @@ import { authenticate } from "./authenticate";
 import { API_BASE_URL } from "./constants";
 import { getNonce } from "./getNonce";
 import { StateManager } from "./StateManager";
+import { fetchBookmarks, BookmarkProvider } from "./BookmarkProvider";
+import { Bookmark } from "./types";
 
-export class SidebarProvider implements vscode.WebviewViewProvider {
+export class UserProvider implements vscode.WebviewViewProvider {
 	_view?: vscode.WebviewView;
 	_doc?: vscode.TextDocument;
 
@@ -12,6 +14,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
 	public resolveWebviewView(webviewView: vscode.WebviewView) {
 		this._view = webviewView;
+		let bookmarkProvider:BookmarkProvider;
 		webviewView.webview.options = {
 			enableScripts: true,
 			localResourceRoots: [this._extensionUri],
@@ -38,8 +41,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
 				case "get-token": {
 					const token = await StateManager.getState("accessToken");
-					if(token){
+					if (token) {
 						webviewView.webview.postMessage({ type: "get-user-info", value: token });
+					}else{
+						webviewView.webview.postMessage({ type: "stop-loading", value: undefined });
 					}
 					break;
 				}
@@ -50,7 +55,15 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 					break;
 				}
 
+				case "load-bookmarks": {
+					const bookmarks:Array<Bookmark> = await fetchBookmarks("sajdhjksad");
+					bookmarkProvider = new BookmarkProvider(bookmarks);
+					// const treeDataProvider = new TreeDataProvider(bookmarks);
+					bookmarkProvider.refresh();
+					break;
+				}
 				case "logout": {
+					bookmarkProvider.onlogout();
 					await StateManager.setState("accessToken", null);
 					vscode.window.showInformationMessage("logout success");
 					break;
@@ -65,8 +78,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
 	private _getHtmlForWebview(webview: vscode.Webview): string {
 		const styleVscodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
-		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out", "compiled/sidebar.js"));
-		const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out", "compiled/sidebar.css"));
+		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out", "compiled/user.js"));
+		// const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out", "compiled/user.css"));
 
 		const nonce = getNonce();
 
@@ -81,7 +94,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             <meta http-equiv="Content-Security-Policy" content="img-src https: data:; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}';">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link href="${styleVscodeUri}" rel="stylesheet">
-            <link href="${styleUri}" rel="stylesheet">
+            
             <script nonce="${nonce}">
                 const tsvscode = acquireVsCodeApi();
                 const API_BASE_URL = ${JSON.stringify(API_BASE_URL)}; 
@@ -93,3 +106,4 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         </html>`;
 	}
 }
+// <link href="${styleUri}" rel="stylesheet">
