@@ -6,7 +6,7 @@ const morgan = require("morgan");
 const passport = require("passport");
 const { Strategy } = require("passport-github");
 const jwt = require("jsonwebtoken");
-
+const cors = require("cors");
 const config = require("./config");
 const qotd = require("./routes/qotd");
 const User = require("./models/User");
@@ -14,6 +14,7 @@ require("./database");
 
 const app = express();
 app.use(helmet());
+app.use(cors())
 app.use(passport.initialize());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
