@@ -7,7 +7,7 @@ const cors = require("cors");
 const passport = require("passport");
 const { Strategy } = require("passport-github");
 const jwt = require("jsonwebtoken");
-
+const cors = require("cors");
 const config = require("./config");
 const stats = require("./routes/stats");
 const qotd = require("./routes/qotd");
