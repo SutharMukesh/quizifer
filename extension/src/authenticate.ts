@@ -8,7 +8,6 @@ export function authenticate(fn: () => void) {
 
 	app.get("/auth/:token", async (req, res) => {
 		const { token } = req.params;
-		console.log("inside Auth token");
 		if (!token) {
 			res.end(`<h1>Something went wrong</h1>`);
 			return;

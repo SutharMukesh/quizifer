@@ -37,26 +37,51 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "quizifer-sidebar-view",
+          "id": "quizifer-sidebar",
           "title": "Quizifer",
           "icon": "media/checklist.svg"
         }
       ]
     },
     "views": {
-      "quizifer-sidebar-view": [
+      "quizifer-sidebar": [
         {
           "type": "webview",
-          "id": "quizifer.sidebar",
-          "name": "Quizifer",
-          "icon": "media/checklist.svg",
-          "contextualTitle": "Quizifer"
+          "id": "quizifer.sidebar.user",
+          "name": "User"
+        },
+        {
+          "id": "quizifer.sidebar.bookmark",
+          "name": "Bookmarks"
         }
       ]
     },
+    "menus": {
+      "view/title": [
+        {
+          "command": "quizifer.bookmark.refresh",
+          "when": "view == quizifer.sidebar.bookmark",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "quizifer.bookmark.delete",
+          "when": "view == quizifer.sidebar.bookmark"
+        }
+      ]
+  
+    },
+    "viewsWelcome": [
+      {
+        "view": "quizifer.sidebar.bookmark",
+        "contents": "Please login to view your bookmarks"
+      }
+    ],
     "commands": [
       {
         "command": "quizifer.qotd",
@@ -67,7 +92,26 @@
         "command": "quizifer.refreshWebView",
         "title": "Refresh Debug webview",
         "category": "Quizifer"
+      },
+      {
+        "command": "quizifer.bookmark.refresh",
+        "title": "Refresh",
+        "category": "Quizifer",
+        "icon": {
+          "light": "media/checklist.svg",
+          "dark": "media/checklist.svg"
+        }
+      },
+      {
+        "command": "quizifer.bookmark.delete",
+        "title": "Delete",
+        "category": "Quizifer",
+        "icon": {
+          "light": "media/checklist.svg",
+          "dark": "media/checklist.svg"
+        }
       }
+
     ]
   },
   "scripts": {

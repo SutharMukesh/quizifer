@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 import { QotdPanel } from "./QotdPanel";
-import { SidebarProvider } from "./SidebarProvider";
+import { UserProvider } from "./UserProvider";
 import { StateManager } from "./StateManager";
 
 function showNotification(context: vscode.ExtensionContext) {
-	if (context.globalState.get("lastOpenedOnDate") != new Date().toDateString()) {
+	if (context.globalState.get("lastOpenedOnDate") !== new Date().toDateString()) {
 		vscode.window.showInformationMessage("Question of the day 🎁", { title: "Let's do it!" }, { title: "Not today" }).then((data) => {
 			if (data?.title === "Let's do it!") {
 				vscode.commands.executeCommand("quizifer.qotd");
@@ -15,10 +15,10 @@ function showNotification(context: vscode.ExtensionContext) {
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Extension "quizifer" is now active!!!');
-	const sidebarProvider = new SidebarProvider(context.extensionUri);
+	const userProvider = new UserProvider(context.extensionUri);
 	StateManager.globalState = context.globalState;
 
-	context.subscriptions.push(vscode.window.registerWebviewViewProvider("quizifer.sidebar", sidebarProvider));
+	vscode.window.registerWebviewViewProvider("quizifer.sidebar.user", userProvider);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand("quizifer.qotd", () => {
@@ -29,12 +29,12 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand("quizifer.refreshWebView", async () => {
 			await vscode.commands.executeCommand("workbench.action.closeSidebar");
-			await vscode.commands.executeCommand("workbench.view.extension.quizifer-sidebar-view");
+			await vscode.commands.executeCommand("workbench.view.extension.quizifer-sidebar-tree-view");
 			// QotdPanel.kill();
 			// QotdPanel.createOrShow(context.extensionUri);
-			// setTimeout(() => {
-			// 	vscode.commands.executeCommand("workbench.action.webview.openDeveloperTools");
-			// }, 500);
+			setTimeout(() => {
+				vscode.commands.executeCommand("workbench.action.webview.openDeveloperTools");
+			}, 500);
 		})
 	);
 
