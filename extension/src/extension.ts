@@ -34,13 +34,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand("quizifer.refreshWebView", async () => {
-			await vscode.commands.executeCommand("workbench.action.closeSidebar");
-			await vscode.commands.executeCommand("workbench.view.extension.quizifer-sidebar-tree-view");
-			// QotdPanel.kill();
-			// QotdPanel.createOrShow(context.extensionUri);
-			setTimeout(() => {
-				vscode.commands.executeCommand("workbench.action.webview.openDeveloperTools");
-			}, 500);
+			// await vscode.commands.executeCommand("workbench.action.closeSidebar");
+			// await vscode.commands.executeCommand("workbench.view.extension.quizifer-sidebar");
+			QotdPanel.kill();
+			QotdPanel.createOrShow(context.extensionUri);
+			// setTimeout(() => {
+			// 	vscode.commands.executeCommand("workbench.action.webview.openDeveloperTools");
+			// }, 500);
 		})
 	);
 

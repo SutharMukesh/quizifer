@@ -37,7 +37,6 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
-
     "viewsContainers": {
       "activitybar": [
         {
@@ -55,8 +54,10 @@
           "name": "User"
         },
         {
+          "type": "tree",
           "id": "quizifer.sidebar.bookmark",
-          "name": "Bookmarks"
+          "name": "Bookmarks",
+          "visibility": "collapsed"
         }
       ]
     },
@@ -74,12 +75,11 @@
           "when": "view == quizifer.sidebar.bookmark"
         }
       ]
-  
     },
     "viewsWelcome": [
       {
         "view": "quizifer.sidebar.bookmark",
-        "contents": "Please login to view your bookmarks"
+        "contents": "No bookmarks found, feel free to add one.\n[Lets see question of the day!](command:quizifer.qotd)"
       }
     ],
     "commands": [
@@ -111,7 +111,6 @@
           "dark": "media/checklist.svg"
         }
       }
-
     ]
   },
   "scripts": {
@@ -140,20 +139,19 @@
     "eslint": "^7.15.0",
     "glob": "^7.1.6",
     "mocha": "^8.1.3",
-    "rollup": "^2.36.2",
-    "rollup-plugin-svelte": "^7.0.0",
+    "rollup": "^2.3.4",
+    "rollup-plugin-svelte": "^6.0.0",
     "rollup-plugin-terser": "^7.0.2",
     "svelte": "^3.31.2",
-    "svelte-check": "^1.1.28",
+    "svelte-check": "^1.1.26",
     "svelte-preprocess": "^4.6.1",
     "ts-loader": "^8.0.14",
     "typescript": "^4.1.2",
     "vscode-test": "^1.4.1",
-    "webpack": "^5.15.0",
+    "webpack": "^5.12.3",
     "webpack-cli": "^4.3.1"
   },
   "dependencies": {
-    "axios": "^0.21.1",
     "polka": "^0.5.2"
   }
 }

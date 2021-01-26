@@ -5,6 +5,7 @@ import { getNonce } from "./getNonce";
 import { StateManager } from "./StateManager";
 import { fetchBookmarks, BookmarkProvider } from "./BookmarkProvider";
 import { Bookmark } from "./types";
+import { QotdPanel } from "./QotdPanel";
 
 export class UserProvider implements vscode.WebviewViewProvider {
 	_view?: vscode.WebviewView;
@@ -14,7 +15,7 @@ export class UserProvider implements vscode.WebviewViewProvider {
 
 	public resolveWebviewView(webviewView: vscode.WebviewView) {
 		this._view = webviewView;
-		let bookmarkProvider:BookmarkProvider;
+		let bookmarkProvider: BookmarkProvider;
 		webviewView.webview.options = {
 			enableScripts: true,
 			localResourceRoots: [this._extensionUri],
@@ -43,12 +44,13 @@ export class UserProvider implements vscode.WebviewViewProvider {
 					const token = await StateManager.getState("accessToken");
 					if (token) {
 						webviewView.webview.postMessage({ type: "get-user-info", value: token });
-					}else{
+					} else {
 						webviewView.webview.postMessage({ type: "stop-loading", value: undefined });
 					}
 					break;
 				}
-				case "authenticate": {
+
+				case "login": {
 					authenticate(async () => {
 						webviewView.webview.postMessage({ type: "get-user-info", value: await StateManager.getState("accessToken") });
 					});
@@ -56,15 +58,16 @@ export class UserProvider implements vscode.WebviewViewProvider {
 				}
 
 				case "load-bookmarks": {
-					const bookmarks:Array<Bookmark> = await fetchBookmarks("sajdhjksad");
+					const bookmarks: Array<Bookmark> = await fetchBookmarks("sajdhjksad");
 					bookmarkProvider = new BookmarkProvider(bookmarks);
-					// const treeDataProvider = new TreeDataProvider(bookmarks);
 					bookmarkProvider.refresh();
 					break;
 				}
+
 				case "logout": {
 					bookmarkProvider.onlogout();
 					await StateManager.setState("accessToken", null);
+					await QotdPanel.updateQotdPanelLocals({ bookmark: false });
 					vscode.window.showInformationMessage("logout success");
 					break;
 				}

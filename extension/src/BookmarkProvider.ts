@@ -45,8 +45,6 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 	}
 
 	getChildren(element?: TreeItem | undefined): vscode.ProviderResult<TreeItem[]> {
-		// If not logged in than dont display anything
-
 		if (element === undefined) {
 			return this.bookmarks;
 		}
@@ -64,6 +62,7 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 
 	saveBookmark(bookmark: Bookmark): void {
 		this.bookmarks.push(new TreeItem(bookmark));
+		this.refresh();
 	}
 }
 

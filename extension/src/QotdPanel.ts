@@ -79,6 +79,11 @@ export class QotdPanel {
 
 		webview.onDidReceiveMessage(async (data) => {
 			switch (data.type) {
+				case "openSideBar": {
+					vscode.commands.executeCommand("workbench.view.extension.quizifer-sidebar");
+					break;
+				}
+
 				case "onInfo": {
 					if (!data.value) {
 						return;
@@ -100,13 +105,15 @@ export class QotdPanel {
 	private async _getHtmlForWebview(webview: vscode.Webview) {
 		// And the uri we use to load this script in the webview
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out/compiled", "qotd.js"));
-		const options = {};
+		const stylesQotdUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out/compiled", "qotd.css"));
+		const options = {
+			accessToken: await StateManager.getState("accessToken"),
+		};
 
 		// Uri to load styles into webview
 		// const stylesResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
 		const stylesMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
 		const stylesHighlightUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", vscode.window.activeColorTheme.kind === 1 ? "stackoverflow-light.min.css" : "stackoverflow-dark.min.css"));
-		const stylesQotdUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "qotd.css"));
 
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = getNonce();
@@ -137,6 +144,13 @@ export class QotdPanel {
 				</body>
 				<script src="${scriptUri}" nonce="${nonce}"/>
 			</html>`;
+	}
+
+	public static async updateQotdPanelLocals(value:any): Promise<void> {
+		if (QotdPanel.currentPanel) {
+			QotdPanel.currentPanel._panel.webview.postMessage({ type: "updateLocals", value });
+		}
+		return;
 	}
 }
 // <link href="${stylesResetUri}" rel="stylesheet">

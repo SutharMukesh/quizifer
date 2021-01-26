@@ -59,7 +59,7 @@
 	<button
 		on:click={() => {
 			tsvscode.postMessage({
-				type: "authenticate",
+				type: "login",
 				value: undefined,
 			});
 			loading = true
