@@ -3,9 +3,10 @@ const express = require("express");
 const Qotd = require("../models/Qotd");
 const config = require("../config");
 const parser = require("./parser");
-const router = express.Router();
 const redis = require("redis");
+const jwt = require("jsonwebtoken");
 
+const router = express.Router();
 const client = redis.createClient(config.redis);
 
 const cache = function (req, res, next) {
@@ -20,20 +21,61 @@ const cache = function (req, res, next) {
 	});
 };
 
+/**
+ * Get QOTD in HTML format
+ * @returns {String} Html string.
+ */
+async function getQotd() {
+	const today = moment().utc().format("YYYY/MM/DD");
+	const questionData = await Qotd.findOne({ date: today });
+	questionData.question = parser(questionData.question);
+	return questionData;
+}
+
+/**
+ * Gets Question In md format for an id
+ * @param {String} id - Mongo Document
+ * @returns {String} - Question md. 
+ */
+async function getQuestionById(id) {
+	const questionData = await Qotd.findById(id);
+	questionData.question = parser(questionData.question);
+	return questionData;
+}
+
 router.get("/", async (req, res) => {
 	try {
-		const today = moment().utc().format("YYYY/MM/DD");
-		const questionData = await Qotd.findOne({ date: today });
-		const html = parser(questionData.question, req.query);
+		const { id } = req.query;
+		let questionData;
+		const todayEnd = new Date().setHours(23, 59, 59, 999);
 
-		// const todayEnd = new Date().setHours(23, 59, 59, 999);
-		// client.set("qotd", html);
-		// client.expireat("qotd", parseInt(todayEnd / 1000));
+		if (id) {
+			// Fetch Question based on the id
+			questionData = await getQuestionById(id);
+			client.set(id, questionData.question);
+			client.expireat(id, parseInt(todayEnd / 1000));
+		} else {
+			// Fetch Question of the day if id is not passed
+			questionData = await getQotd();
+			client.set("qotd", questionData.question);
+			client.expireat("qotd", parseInt(todayEnd / 1000));
+		}
 
-		res.send(html);
+		// Return the entire question mongo document if user is logged in.
+		const authHeader = req.headers.authorization;
+		if (authHeader) {
+			const token = authHeader.split(" ")[1];
+			if (!token) {
+				return res.send({ question: "Token not found in auth header" });
+			}
+			await jwt.verify(token, process.env.JWT_SECRET);
+			return res.json(questionData);
+		}
+		// If no user logged in the return just the question.
+		return res.send(questionData.question);
 	} catch (error) {
 		console.log(error.stack ? error.stack : error);
-		res.status(500).json({ message: error.message });
+		return res.status(500).json({ message: error.message });
 	}
 });
 
