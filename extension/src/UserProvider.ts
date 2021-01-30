@@ -3,19 +3,17 @@ import { authenticate } from "./authenticate";
 import { API_BASE_URL } from "./constants";
 import { getNonce } from "./getNonce";
 import { StateManager } from "./StateManager";
-import { fetchBookmarks, BookmarkProvider } from "./BookmarkProvider";
-import { Bookmark } from "./types";
+import { BookmarkProvider } from "./BookmarkProvider";
 import { QotdPanel } from "./QotdPanel";
 
 export class UserProvider implements vscode.WebviewViewProvider {
 	_view?: vscode.WebviewView;
 	_doc?: vscode.TextDocument;
-
+	public static bookmarkProvider: BookmarkProvider;
 	constructor(private readonly _extensionUri: vscode.Uri) {}
 
 	public resolveWebviewView(webviewView: vscode.WebviewView) {
 		this._view = webviewView;
-		let bookmarkProvider: BookmarkProvider;
 		webviewView.webview.options = {
 			enableScripts: true,
 			localResourceRoots: [this._extensionUri],
@@ -53,20 +51,25 @@ export class UserProvider implements vscode.WebviewViewProvider {
 				case "login": {
 					authenticate(async () => {
 						webviewView.webview.postMessage({ type: "get-user-info", value: await StateManager.getState("accessToken") });
+						QotdPanel.kill();
+						QotdPanel.createOrShow(this._extensionUri);
 					});
 					break;
 				}
 
 				case "load-bookmarks": {
-					const bookmarks: Array<Bookmark> = await fetchBookmarks("sajdhjksad");
-					bookmarkProvider = new BookmarkProvider(bookmarks);
-					bookmarkProvider.refresh();
+					const { accessToken, user } = data.value;
+					const bookmarks = user.bookmarks || [];
+					await StateManager.setState("bookmarks", bookmarks);
+					UserProvider.bookmarkProvider = new BookmarkProvider(accessToken, bookmarks);
+					UserProvider.bookmarkProvider.refresh();
 					break;
 				}
 
 				case "logout": {
-					bookmarkProvider.onlogout();
+					UserProvider.bookmarkProvider.onlogout();
 					await StateManager.setState("accessToken", null);
+					await StateManager.setState("bookmarks", []);
 					await QotdPanel.updateQotdPanelLocals({ bookmark: false });
 					vscode.window.showInformationMessage("logout success");
 					break;

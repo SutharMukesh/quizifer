@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import { API_BASE_URL } from "./constants";
 import { getNonce } from "./getNonce";
+import { StateManager } from "./StateManager";
+import { UserProvider } from "./UserProvider";
 
 export class QotdPanel {
 	/**
@@ -12,9 +14,10 @@ export class QotdPanel {
 
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
+	private readonly _id: string | undefined;
 	private _disposables: vscode.Disposable[] = [];
 
-	public static createOrShow(extensionUri: vscode.Uri) {
+	public static createOrShow(extensionUri: vscode.Uri, id?: string | undefined) {
 		const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
 
 		// If we already have a panel, show it.
@@ -33,7 +36,7 @@ export class QotdPanel {
 			localResourceRoots: [vscode.Uri.joinPath(extensionUri, "media"), vscode.Uri.joinPath(extensionUri, "out/compiled")],
 		});
 
-		QotdPanel.currentPanel = new QotdPanel(panel, extensionUri);
+		QotdPanel.currentPanel = new QotdPanel(panel, extensionUri, id);
 	}
 
 	public static kill() {
@@ -41,13 +44,14 @@ export class QotdPanel {
 		QotdPanel.currentPanel = undefined;
 	}
 
-	public static revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
-		QotdPanel.currentPanel = new QotdPanel(panel, extensionUri);
+	public static revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, id: string | undefined) {
+		QotdPanel.currentPanel = new QotdPanel(panel, extensionUri, id);
 	}
 
-	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
+	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, id: string | undefined) {
 		this._panel = panel;
 		this._extensionUri = extensionUri;
+		this._id = id;
 
 		// Set the webview's initial html content
 		this._update();
@@ -79,6 +83,19 @@ export class QotdPanel {
 
 		webview.onDidReceiveMessage(async (data) => {
 			switch (data.type) {
+				case "updateBookmark": {
+					if (!data.value) {
+						return;
+					}
+					const { _id, caption, bookmark, accessToken } = data.value;
+					if (bookmark) {
+						UserProvider.bookmarkProvider.saveBookmark(accessToken,{ id: _id, caption });
+					} else {
+						UserProvider.bookmarkProvider.removeBookmark(accessToken,_id);
+					}
+					break;
+				}
+
 				case "openSideBar": {
 					vscode.commands.executeCommand("workbench.view.extension.quizifer-sidebar");
 					break;
@@ -105,9 +122,11 @@ export class QotdPanel {
 	private async _getHtmlForWebview(webview: vscode.Webview) {
 		// And the uri we use to load this script in the webview
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out/compiled", "qotd.js"));
-		const stylesQotdUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out/compiled", "qotd.css"));
+		const stylesQotdUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "qotd.css"));
 		const options = {
 			accessToken: await StateManager.getState("accessToken"),
+			bookmarks: await StateManager.getState("bookmarks"),
+			id: this._id,
 		};
 
 		// Uri to load styles into webview
@@ -118,7 +137,7 @@ export class QotdPanel {
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = getNonce();
 
-		webview.postMessage({ type: "on-load", value: options });
+		webview.postMessage({ type: "get-qotd", value: options });
 
 		return `<!DOCTYPE html>
 			<html lang="en">
@@ -132,7 +151,7 @@ export class QotdPanel {
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
 					<link href="" rel="stylesheet">
 					<link href="${stylesMainUri}" rel="stylesheet">
-					
+
 					<link href="${stylesHighlightUri}" rel="stylesheet">					
 					<link href="${stylesQotdUri}" rel="stylesheet">
 					<script nonce="${nonce}">
@@ -146,11 +165,11 @@ export class QotdPanel {
 			</html>`;
 	}
 
-	public static async updateQotdPanelLocals(value:any): Promise<void> {
+	public static async updateQotdPanelLocals(value: any): Promise<void> {
 		if (QotdPanel.currentPanel) {
 			QotdPanel.currentPanel._panel.webview.postMessage({ type: "updateLocals", value });
 		}
 		return;
 	}
 }
-// <link href="${stylesResetUri}" rel="stylesheet">
+

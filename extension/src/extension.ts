@@ -27,8 +27,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	vscode.window.registerWebviewViewProvider("quizifer.sidebar.user", userProvider);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("quizifer.qotd", () => {
-			QotdPanel.createOrShow(context.extensionUri);
+		vscode.commands.registerCommand("quizifer.qotd", (id) => {
+			QotdPanel.createOrShow(context.extensionUri, id);
 		})
 	);
 

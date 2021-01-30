@@ -11,8 +11,7 @@
 			const message = event.data;
 			switch (message.type) {
 				case "get-user-info":
-					console.log("inside get-user-info")
-					console.time("inside get-user-info")
+					console.log("inside get-user-info");
 					accessToken = message.value;
 					try {
 						const response = await fetch(`${API_BASE_URL}/me`, {
@@ -21,22 +20,20 @@
 							},
 						});
 						console.log(response);
-						const data = await response.json();
-						console.log(data);
-						user = data.user;
+						user = await response.json();
+						console.log(user);
 					} catch (error) {
 						tsvscode.postMessage({ type: "onError", value: error });
 					}
 					loading = false;
-					tsvscode.postMessage({ type: "load-bookmarks", value: accessToken });
-					console.timeEnd("inside get-user-info")
+					tsvscode.postMessage({ type: "load-bookmarks", value: { accessToken, user } });
 					break;
 				case "stop-loading":
 					loading = false;
 					break;
 			}
 		});
-		console.log('calling get-token')
+		console.log("calling get-token");
 		tsvscode.postMessage({ type: "get-token", value: undefined });
 	});
 </script>
@@ -62,7 +59,7 @@
 				type: "login",
 				value: undefined,
 			});
-			loading = true
+			loading = true;
 		}}>Login with Github</button
 	>
 {/if}
