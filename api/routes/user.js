@@ -4,7 +4,7 @@ const config = require("../config");
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
 const { Strategy } = require("passport-github");
-const mongoose = require("mongoose");
+const ObjectId = require("mongoose").Types.ObjectId;
 const router = express.Router();
 
 passport.use(
@@ -65,7 +65,7 @@ router.get("/me", async (req, res) => {
 		const user = await User.aggregate([
 			{
 				$match: {
-					_id: mongoose.Types.ObjectId(payload.userId),
+					_id: ObjectId(payload.userId),
 				},
 			},
 			{
@@ -90,7 +90,7 @@ router.put("/bookmarks/:bookmark", async (req, res) => {
 		if (!bookmark) {
 			return res.status(500).send({ message: "No bookmark passed to add" });
 		}
-		await User.findByIdAndUpdate(payload.userId, { $addToSet: { bookmarks: bookmark } });
+		await User.updateOne({ _id: ObjectId(payload.userId) }, { $addToSet: { bookmarks: ObjectId(bookmark) } });
 		return res.send({ message: "bookmark added" });
 	}
 	return res.status(500).send({ user: null });
@@ -103,7 +103,7 @@ router.delete("/bookmarks/:bookmark", async (req, res) => {
 		if (!bookmark) {
 			return res.status(500).send({ message: "No bookmark passed to delete" });
 		}
-		await User.findByIdAndUpdate(payload.userId, { $pull: { bookmarks: bookmark } });
+		await User.updateOne({ _id: ObjectId(payload.userId) }, { $pull: { bookmarks: ObjectId(bookmark) } });
 		return res.send({ message: "bookmark deleted" });
 	}
 	return res.status(500).send({ user: null });
