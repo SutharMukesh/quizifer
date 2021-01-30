@@ -4,7 +4,7 @@ const config = require("../config");
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
 const { Strategy } = require("passport-github");
-
+const mongoose = require("mongoose");
 const router = express.Router();
 
 passport.use(
@@ -33,6 +33,26 @@ passport.serializeUser((user, done) => {
 	done(null, user.accessToken);
 });
 
+const validateAccessToken = async (authHeader) => {
+	if (!authHeader) {
+		console.error("Auth Header Missing");
+		return false;
+	}
+	const token = authHeader.split(" ")[1];
+	if (!token) {
+		console.error("Token not found in auth header");
+		return false;
+	}
+
+	try {
+		const payload = await jwt.verify(token, process.env.JWT_SECRET);
+		return payload;
+	} catch (error) {
+		console.error(error);
+		return false;
+	}
+};
+
 router.get("/auth/github", passport.authenticate("github"));
 
 router.get("/auth/github/callback", passport.authenticate("github"), (req, res) => {
@@ -40,28 +60,53 @@ router.get("/auth/github/callback", passport.authenticate("github"), (req, res) 
 });
 
 router.get("/me", async (req, res) => {
-	const authHeader = req.headers.authorization;
-	if (!authHeader) {
-		console.error("Auth Header Missing");
-		return res.send({ user: null });
+	const payload = await validateAccessToken(req.headers.authorization);
+	if (payload) {
+		const user = await User.aggregate([
+			{
+				$match: {
+					_id: mongoose.Types.ObjectId(payload.userId),
+				},
+			},
+			{
+				$lookup: {
+					from: "qotds",
+					localField: "bookmarks",
+					foreignField: "_id",
+					as: "bookmarks",
+				},
+			},
+			{ $project: { bookmarks: { question: 0 } } },
+		]);
+		return res.send(user[0]);
 	}
-	const token = authHeader.split(" ")[1];
-	if (!token) {
-		console.error("Token not found in auth header");
-		return res.send({ user: null });
-	}
+	return res.status(500).send({ user: null });
+});
 
-	let userId = "";
-	try {
-		const payload = await jwt.verify(token, process.env.JWT_SECRET);
-		userId = payload.userId;
-	} catch (error) {
-		console.error(error);
-		return res.send({ user: null });
+router.put("/bookmarks/:bookmark", async (req, res) => {
+	const payload = await validateAccessToken(req.headers.authorization);
+	if (payload) {
+		const { bookmark } = req.params;
+		if (!bookmark) {
+			return res.status(500).send({ message: "No bookmark passed to add" });
+		}
+		await User.findByIdAndUpdate(payload.userId, { $addToSet: { bookmarks: bookmark } });
+		return res.send({ message: "bookmark added" });
 	}
-	
-	const user = await User.findById(userId);
-	return res.send({ user });
+	return res.status(500).send({ user: null });
+});
+
+router.delete("/bookmarks/:bookmark", async (req, res) => {
+	const payload = await validateAccessToken(req.headers.authorization);
+	if (payload) {
+		const { bookmark } = req.params;
+		if (!bookmark) {
+			return res.status(500).send({ message: "No bookmark passed to delete" });
+		}
+		await User.findByIdAndUpdate(payload.userId, { $pull: { bookmarks: bookmark } });
+		return res.send({ message: "bookmark deleted" });
+	}
+	return res.status(500).send({ user: null });
 });
 
 module.exports = router;

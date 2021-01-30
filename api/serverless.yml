@@ -29,6 +29,10 @@ functions:
           method: GET
           cors: true
       - http: 
+          path: /bookmarks/{bookmark}
+          method: ANY
+          cors: true
+      - http: 
           path: /stats/{event}
           method: PUT
           cors: true
@@ -39,8 +43,7 @@ custom:
       enabled: true
       events:
         - schedule: rate(5 minutes)
-    
-      
+
 plugins:
   - serverless-offline
   - serverless-plugin-warmup
