@@ -16,6 +16,10 @@ pre {
 }
 code {
 	display: inline !important;
-	/* padding: 0 0.5rem !important; */
+	padding: 0 0.5rem !important;
 	border-radius: 2px;
+}
+
+li {
+	padding: 0 0 0.5rem 0 !important;
 }
