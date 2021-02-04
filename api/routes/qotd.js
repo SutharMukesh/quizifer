@@ -4,22 +4,9 @@ const Qotd = require("../models/Qotd");
 const config = require("../config");
 const parser = require("./parser");
 const redis = require("redis");
-const jwt = require("jsonwebtoken");
-
 const router = express.Router();
 const client = redis.createClient(config.redis);
-
-const cache = function (req, res, next) {
-	client.get("qotd", (err, data) => {
-		if (err) throw error;
-		if (data) {
-			console.log(`Serving todays question from cache.`);
-			res.send(data);
-		} else {
-			next();
-		}
-	});
-};
+const { cache, auth } = require("./middleware")(client);
 
 /**
  * Get QOTD in HTML format
@@ -35,7 +22,7 @@ async function getQotd() {
 /**
  * Gets Question In md format for an id
  * @param {String} id - Mongo Document
- * @returns {String} - Question md. 
+ * @returns {String} - Question md.
  */
 async function getQuestionById(id) {
 	const questionData = await Qotd.findById(id);
@@ -43,32 +30,30 @@ async function getQuestionById(id) {
 	return questionData;
 }
 
-router.get("/", async (req, res) => {
+router.get("/", auth, cache, async (req, res) => {
 	try {
 		const { id } = req.query;
 		let questionData;
 		const todayEnd = new Date().setHours(23, 59, 59, 999);
 
+		const { isAuthenticated } = req.headers;
+
 		if (id) {
 			// Fetch Question based on the id
 			questionData = await getQuestionById(id);
-			client.set(id, questionData.question);
-			client.expireat(id, parseInt(todayEnd / 1000));
+			var { key, data } = isAuthenticated ? { key: `${id}-auth`, data: questionData } : { key: id, data: questionData.question };
 		} else {
 			// Fetch Question of the day if id is not passed
 			questionData = await getQotd();
-			client.set("qotd", questionData.question);
-			client.expireat("qotd", parseInt(todayEnd / 1000));
+			var { key, data } = isAuthenticated ? { key: "qotd-auth", data: questionData } : { key: "qotd", data: questionData.question };
 		}
 
+		client.set(key, key.includes("auth") ? JSON.stringify(data) : data);
+		client.expireat(key, parseInt(todayEnd / 1000));
+
 		// Return the entire question mongo document if user is logged in.
-		const authHeader = req.headers.authorization;
-		if (authHeader) {
-			const token = authHeader.split(" ")[1];
-			if (!token) {
-				return res.send({ question: "Token not found in auth header" });
-			}
-			await jwt.verify(token, process.env.JWT_SECRET);
+
+		if (isAuthenticated) {
 			return res.json(questionData);
 		}
 		// If no user logged in the return just the question.
