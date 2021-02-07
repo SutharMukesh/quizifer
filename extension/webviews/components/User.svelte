@@ -5,7 +5,7 @@
 	let loading = true;
 	let accessToken: string | null = null;
 	let user: User | null = null;
-
+	let errorMessage: string | null = null;
 	onMount(async () => {
 		window.addEventListener("message", async (event) => {
 			const message = event.data;
@@ -22,11 +22,12 @@
 						console.log(response);
 						user = await response.json();
 						console.log(user);
+						tsvscode.postMessage({ type: "load-bookmarks", value: { accessToken, user } });
 					} catch (error) {
-						tsvscode.postMessage({ type: "onError", value: error });
+						errorMessage = "Error fetching user info!";
+						tsvscode.postMessage({ type: "onError", value: error.message ? error.message : error });
 					}
 					loading = false;
-					tsvscode.postMessage({ type: "load-bookmarks", value: { accessToken, user } });
 					break;
 				case "stop-loading":
 					loading = false;
@@ -40,6 +41,8 @@
 
 {#if loading}
 	<div>Please wait, Fetching info...</div>
+{:else if errorMessage}
+	<div>{errorMessage}</div>
 {:else if user}
 	<h3>{user.name}</h3>
 	<button

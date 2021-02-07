@@ -39,10 +39,13 @@ export class UserProvider implements vscode.WebviewViewProvider {
 				}
 
 				case "get-token": {
-					const token = await StateManager.getState("accessToken");
-					if (token) {
-						webviewView.webview.postMessage({ type: "get-user-info", value: token });
+					// This is called when user view is loaded.
+					const accessToken = StateManager.getState("accessToken");
+					if (accessToken) {
+						// Initialize bookmark Provider if user is already logged in
+						webviewView.webview.postMessage({ type: "get-user-info", value: accessToken });
 					} else {
+						// user is not loggedIn
 						webviewView.webview.postMessage({ type: "stop-loading", value: undefined });
 					}
 					break;
@@ -50,7 +53,13 @@ export class UserProvider implements vscode.WebviewViewProvider {
 
 				case "login": {
 					authenticate(async () => {
-						webviewView.webview.postMessage({ type: "get-user-info", value: await StateManager.getState("accessToken") });
+						const accessToken: string | any = StateManager.getState("accessToken");
+
+						// Initialize bookmark Provider View after user authenticates
+						UserProvider.bookmarkProvider = new BookmarkProvider(accessToken);
+
+						// Gets user info and after that load bookmarks
+						webviewView.webview.postMessage({ type: "get-user-info", value: accessToken });
 						QotdPanel.kill();
 						QotdPanel.createOrShow(this._extensionUri);
 					});
@@ -58,19 +67,17 @@ export class UserProvider implements vscode.WebviewViewProvider {
 				}
 
 				case "load-bookmarks": {
-					const { accessToken, user } = data.value;
+					// this is triggered after get-user-info
+					const { user } = data.value;
 					const bookmarks = user.bookmarks || [];
-					await StateManager.setState("bookmarks", bookmarks);
-					UserProvider.bookmarkProvider = new BookmarkProvider(accessToken, bookmarks);
-					UserProvider.bookmarkProvider.refresh();
+					await UserProvider.bookmarkProvider.initBookmarks(bookmarks);
 					break;
 				}
 
 				case "logout": {
-					UserProvider.bookmarkProvider.onlogout();
+					// Empty bookmarks.
+					await UserProvider.bookmarkProvider.onlogout();
 					await StateManager.setState("accessToken", null);
-					await StateManager.setState("bookmarks", []);
-					await QotdPanel.updateQotdPanelLocals({ bookmark: false });
 					vscode.window.showInformationMessage("logout success");
 					break;
 				}

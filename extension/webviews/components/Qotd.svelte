@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import type { Bookmark } from "../../src/types";
 	interface Locals {
 		accessToken: string | undefined;
 		bookmark: boolean;
@@ -31,43 +32,55 @@
 		updateLocals({ bookmark: !locals.bookmark });
 	};
 
+	function syncBookmarkState(_id: string, bookmarkTreeItems: Array<Bookmark>) {
+		if (bookmarkTreeItems.some((bookmarkTreeItem: any) => bookmarkTreeItem.id == _id)) {
+			updateLocals({ bookmark: true });
+		} else {
+			updateLocals({ bookmark: false });
+		}
+	}
+
 	onMount(async () => {
 		window.addEventListener("message", async (event) => {
 			const message = event.data;
 			switch (message.type) {
+				case "syncBookmarkState": {
+					const { bookmarkTreeItems } = message.value;
+					// Check if the current QOTD is present in updated bookmarkTreeItems.
+					syncBookmarkState(locals._id, bookmarkTreeItems);
+					break;
+				}
+
 				case "get-qotd":
 					try {
-						const { accessToken, id, bookmarks } = message.value;
+						const { accessToken, id, bookmarkTreeItems } = message.value;
 						locals = { ...locals, ...{ accessToken } };
 
-						if (accessToken) {
+						if (accessToken) {;
 							// for user that are Logged in
 							let response: any = await fetch(`${API_BASE_URL}/qotd?${id ? new URLSearchParams({ id }) : {}}`, {
 								headers: {
 									authorization: `Bearer ${accessToken}`,
 								},
 							});
-							response = await response.text();
-							const { _id, question, caption } = JSON.parse(response);
-							updateLocals({ _id, question, caption });
-							console.log(bookmarks);
-						
-							if (bookmarks.some((bookmark: any) => bookmark._id == _id)) {
-								updateLocals({ bookmark: true });
-							} else {
-								updateLocals({ bookmark: false });
+							const responseObj = JSON.parse(await response.text());
+							if (response.status !== 200) {
+								return updateLocals({ question: `<h3>${responseObj.message}</h3>` });
 							}
+							const { _id, question, caption } = responseObj;
+							updateLocals({ _id, question, caption });
+
+							// check current QOTD is present in bookmark.
+							syncBookmarkState(_id, bookmarkTreeItems);
 						} else {
 							// for user that are not logged in
 							const response: any = await fetch(`${API_BASE_URL}/qotd`);
 							updateLocals({ question: await response.text(), upvotes: 0, downvotes: 0, bookmark: false });
 						}
 					} catch (error) {
-						console.error(error.stack);
-						tsvscode.postMessage({ type: "onError", value: error.message ? error.message : error });
+						tsvscode.postMessage({ type: "onError", value: error.stack });
 					}
 					updateLocals({ loading: false });
-					console.log(locals);
 					return;
 				case "updateLocals":
 					return updateLocals(message.value);

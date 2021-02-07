@@ -6,7 +6,7 @@ export class StateManager {
 
 	static async setState(key: string, value: string | null | any) {
 		await this.globalState.update(key, value);
-		await QotdPanel.updateQotdPanelLocals({ accessToken: await this.globalState.get("accessToken") });
+		await QotdPanel.callQotdPanelListener("updateLocals", { accessToken: await this.globalState.get("accessToken") });
 		return;
 	}
 

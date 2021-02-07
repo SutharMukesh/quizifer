@@ -10,33 +10,46 @@ export class QotdPanel {
 	 */
 	public static currentPanel: QotdPanel | undefined;
 
-	public static readonly viewType = "quiz";
+	public static readonly viewType = "qotd";
 
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
-	private readonly _id: string | undefined;
+	private readonly _id: string;
 	private _disposables: vscode.Disposable[] = [];
+	private static panels: any = new Map();
 
-	public static createOrShow(extensionUri: vscode.Uri, id?: string | undefined) {
+	public static createOrShow(extensionUri: vscode.Uri, _arguments?: { _id?: string; caption?: string }) {
 		const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
 
-		// If we already have a panel, show it.
-		if (QotdPanel.currentPanel) {
-			QotdPanel.currentPanel._panel.reveal(column);
-			QotdPanel.currentPanel._update();
+		const _id = _arguments?._id || "qotd";
+		const title = _arguments?.caption || "Question of the day";
+		/**
+		 * This was a real headache!!
+		 * Conventional panel reveal code only works if you have one panel to show at a time
+		 * so i need to create a hashmap which stores different panel objects
+		 * and reveal accordingly
+		 */
+		if (this.panels.has(_id)) {
+			this.panels.get(_id)._panel.reveal(column);
 			return;
 		}
 
 		// Otherwise, create a new panel.
-		const panel = vscode.window.createWebviewPanel(QotdPanel.viewType, "Question of the day", column || vscode.ViewColumn.One, {
+		const panel = vscode.window.createWebviewPanel(QotdPanel.viewType, title, column || vscode.ViewColumn.Active, this.getWebviewOptions(extensionUri));
+
+		QotdPanel.currentPanel = new QotdPanel(panel, extensionUri, _id);
+		this.panels.set(_id, QotdPanel.currentPanel);
+	}
+
+	public static getWebviewOptions(extensionUri: vscode.Uri): any {
+		return {
 			// Enable javascript in the webview
 			enableScripts: true,
-
+			// dont load the question again if users is just switching between existing panels.
+			retainContextWhenHidden: true,
 			// And restrict the webview to only loading content from our extension's `media` directory.
 			localResourceRoots: [vscode.Uri.joinPath(extensionUri, "media"), vscode.Uri.joinPath(extensionUri, "out/compiled")],
-		});
-
-		QotdPanel.currentPanel = new QotdPanel(panel, extensionUri, id);
+		};
 	}
 
 	public static kill() {
@@ -44,14 +57,14 @@ export class QotdPanel {
 		QotdPanel.currentPanel = undefined;
 	}
 
-	public static revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, id: string | undefined) {
-		QotdPanel.currentPanel = new QotdPanel(panel, extensionUri, id);
+	public static revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, _id: string) {
+		QotdPanel.currentPanel = new QotdPanel(panel, extensionUri, _id);
 	}
 
-	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, id: string | undefined) {
+	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, _id: string) {
 		this._panel = panel;
 		this._extensionUri = extensionUri;
-		this._id = id;
+		this._id = _id;
 
 		// Set the webview's initial html content
 		this._update();
@@ -78,7 +91,6 @@ export class QotdPanel {
 	private async _update() {
 		const webview = this._panel.webview;
 
-		// this._panel.webview.html = this._getLoadingView();
 		this._panel.webview.html = await this._getHtmlForWebview(webview);
 
 		webview.onDidReceiveMessage(async (data) => {
@@ -89,9 +101,9 @@ export class QotdPanel {
 					}
 					const { _id, caption, bookmark, accessToken } = data.value;
 					if (bookmark) {
-						UserProvider.bookmarkProvider.saveBookmark(accessToken,{ id: _id, caption });
+						await UserProvider.bookmarkProvider.saveBookmark(accessToken, { _id, caption });
 					} else {
-						UserProvider.bookmarkProvider.removeBookmark(accessToken,_id);
+						await UserProvider.bookmarkProvider.removeBookmark(accessToken, _id);
 					}
 					break;
 				}
@@ -125,7 +137,7 @@ export class QotdPanel {
 		const stylesQotdUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "qotd.css"));
 		const options = {
 			accessToken: await StateManager.getState("accessToken"),
-			bookmarks: await StateManager.getState("bookmarks"),
+			bookmarkTreeItems: await StateManager.getState("bookmarkTreeItems"),
 			id: this._id,
 		};
 
@@ -165,11 +177,10 @@ export class QotdPanel {
 			</html>`;
 	}
 
-	public static async updateQotdPanelLocals(value: any): Promise<void> {
+	public static async callQotdPanelListener(listener: string, value: any): Promise<void> {
 		if (QotdPanel.currentPanel) {
-			QotdPanel.currentPanel._panel.webview.postMessage({ type: "updateLocals", value });
+			QotdPanel.currentPanel._panel.webview.postMessage({ type: listener, value });
 		}
 		return;
 	}
 }
-

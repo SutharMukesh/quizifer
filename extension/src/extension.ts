@@ -3,6 +3,7 @@ import { QotdPanel } from "./QotdPanel";
 import { UserProvider } from "./UserProvider";
 import { StateManager } from "./StateManager";
 import { statModule } from "./stats";
+import { BookmarkProvider } from "./BookmarkProvider";
 
 async function showNotification(context: vscode.ExtensionContext) {
 	if (StateManager.getState("lastInteractOnDate") !== new Date().toDateString()) {
@@ -27,10 +28,16 @@ export async function activate(context: vscode.ExtensionContext) {
 	vscode.window.registerWebviewViewProvider("quizifer.sidebar.user", userProvider);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("quizifer.qotd", (id) => {
-			QotdPanel.createOrShow(context.extensionUri, id);
+		vscode.commands.registerCommand("quizifer.qotd", (_arguments) => {
+			QotdPanel.createOrShow(context.extensionUri, _arguments);
 		})
 	);
+
+	// Register Bookmark provider if user is loggedIn
+	const accessToken = StateManager.getState("accessToken");
+	if (accessToken) {
+		UserProvider.bookmarkProvider = new BookmarkProvider(accessToken);
+	}
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand("quizifer.refreshWebView", async () => {

@@ -1,4 +1,4 @@
 export type Bookmark = {
-	id: string;
+	_id: string;
 	caption: string;
 };
