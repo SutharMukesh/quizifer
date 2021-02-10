@@ -38,7 +38,7 @@ router.get("/", auth, cache, async (req, res) => {
 
 		const { isAuthenticated } = req.headers;
 
-		if (id) {
+		if (id && id !== "qotd") {
 			// Fetch Question based on the id
 			questionData = await getQuestionById(id);
 			var { key, data } = isAuthenticated ? { key: `${id}-auth`, data: questionData } : { key: id, data: questionData.question };
