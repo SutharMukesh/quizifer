@@ -52,9 +52,13 @@
 			const message = event.data;
 			switch (message.type) {
 				case "syncBookmarkState": {
-					const { bookmarkTreeItems } = message.value;
-					// Check if the current QOTD is present in updated bookmarkTreeItems.
-					syncBookmarkState(locals._id, bookmarkTreeItems);
+					try {
+						const { bookmarkTreeItems } = message.value;
+						// Check if the current QOTD is present in updated bookmarkTreeItems.
+						syncBookmarkState(locals._id, bookmarkTreeItems);
+					} catch (error) {
+						tsvscode.postMessage({ type: "onError", value: error.stack ? error.stack : error });
+					}
 					break;
 				}
 
@@ -85,7 +89,7 @@
 							updateLocals({ question: await response.text(), upvotes: 0, downvotes: 0, bookmark: false });
 						}
 					} catch (error) {
-						tsvscode.postMessage({ type: "onError", value: error.stack });
+						tsvscode.postMessage({ type: "onError", value: error.stack ? error.stack : error });
 					}
 					updateLocals({ loading: false });
 					return;
@@ -106,7 +110,7 @@
 		<div class="bookmark">
 			<div class="metric-container">
 				<svg on:click={bookmarkListener} class="bookmark-icon">
-					<path d={locals.bookmark ? svg.bookmarkOn.d : svg.bookmarkOff.d} fill="black" />
+					<path d={locals.bookmark ? svg.bookmarkOn.d : svg.bookmarkOff.d} id="bookmark-svg" />
 				</svg>
 			</div>
 		</div>

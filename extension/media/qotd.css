@@ -46,3 +46,7 @@ li {
 	height: 30px;
 	margin-top: 0.9rem;
 }
+
+#bookmark-svg {
+	fill: #ccccccbf;
+}
