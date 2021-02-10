@@ -37,8 +37,8 @@ export class QotdPanel {
 		// Otherwise, create a new panel.
 		const panel = vscode.window.createWebviewPanel(QotdPanel.viewType, title, column || vscode.ViewColumn.Active, this.getWebviewOptions(extensionUri));
 
-		QotdPanel.currentPanel = new QotdPanel(panel, extensionUri, _id);
-		this.panels.set(_id, QotdPanel.currentPanel);
+		const qotdPanel = new QotdPanel(panel, extensionUri, _id);
+		this.panels.set(_id, qotdPanel);
 	}
 
 	public static getWebviewOptions(extensionUri: vscode.Uri): any {
@@ -52,13 +52,14 @@ export class QotdPanel {
 		};
 	}
 
-	public static kill() {
-		QotdPanel.currentPanel?.dispose();
-		QotdPanel.currentPanel = undefined;
+	public static kill(_id: string) {
+		this.panels.get(_id)?.dispose();
+		this.panels.delete(_id);
 	}
 
 	public static revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, _id: string) {
-		QotdPanel.currentPanel = new QotdPanel(panel, extensionUri, _id);
+		const qotdPanel = new QotdPanel(panel, extensionUri, _id);
+		this.panels.set(_id, qotdPanel);
 	}
 
 	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, _id: string) {
@@ -75,7 +76,7 @@ export class QotdPanel {
 	}
 
 	public dispose() {
-		QotdPanel.currentPanel = undefined;
+		QotdPanel.panels.delete(this._id);
 
 		// Clean up our resources
 		this._panel.dispose();
@@ -178,8 +179,9 @@ export class QotdPanel {
 	}
 
 	public static async callQotdPanelListener(listener: string, value: any): Promise<void> {
-		if (QotdPanel.currentPanel) {
-			QotdPanel.currentPanel._panel.webview.postMessage({ type: listener, value });
+		// Update all panel instances variables.
+		for (let _id in this.panels){
+			this.panels[_id]._panel.webview.postMessage({ type: listener, value });
 		}
 		return;
 	}

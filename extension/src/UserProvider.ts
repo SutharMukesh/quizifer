@@ -60,7 +60,7 @@ export class UserProvider implements vscode.WebviewViewProvider {
 
 						// Gets user info and after that load bookmarks
 						webviewView.webview.postMessage({ type: "get-user-info", value: accessToken });
-						QotdPanel.kill();
+						QotdPanel.kill("qotd");
 						QotdPanel.createOrShow(this._extensionUri);
 					});
 					break;
