@@ -120,6 +120,9 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 	async upsertBookmark(accessToken: string, bookmark: Bookmark): Promise<void> {
 		try {
 			const result = await showInputBox(bookmark.caption);
+			if (bookmark.caption === result) {
+				return;
+			}
 			bookmark.caption = result;
 			const bookmarkItem = new TreeItem(bookmark);
 			await bookmarkHelper.upsert(accessToken, bookmarkItem);
