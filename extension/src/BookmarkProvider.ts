@@ -119,14 +119,19 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 
 	async upsertBookmark(accessToken: string, bookmark: Bookmark): Promise<void> {
 		try {
+			// Get edited caption
 			const result = await showInputBox(bookmark.caption);
+			// Dont do anything if caption is same after edit
 			if (bookmark.caption === result) {
 				return;
 			}
+
+			// upsert on server
 			bookmark.caption = result;
 			const bookmarkItem = new TreeItem(bookmark);
 			await bookmarkHelper.upsert(accessToken, bookmarkItem);
 
+			// upsert on extension.
 			let upsert = false;
 			this.bookmarks = this.bookmarks.map((bookmarkObj) => {
 				if (bookmarkObj.id === bookmarkItem.id) {
@@ -138,23 +143,29 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 			if (!upsert) {
 				this.bookmarks = [...this.bookmarks, bookmarkItem];
 			}
+			// Refresh extension bookmark panel
 			await this.refresh();
 		} catch (error) {
-			console.error(`BookmarkProvider: add: ${error.stack ? error.stack : error}`);
+			console.error(`BookmarkProvider: upsertBookmark: ${error.stack ? error.stack : error}`);
 			vscode.window.showErrorMessage(error.message);
 		}
+		// Sync bookmark array instance of QotdPanel.
 		QotdPanel.callQotdPanelListener("syncBookmarkState", { bookmarkTreeItems: StateManager.getState("bookmarkTreeItems") });
 	}
 
 	async removeBookmark(accessToken: string, _id: string): Promise<void> {
 		try {
+			// Delete from server
 			await bookmarkHelper.remove(accessToken, _id);
+			// Delete from extension
 			this.bookmarks = this.bookmarks.filter((bookmark) => bookmark.id !== _id);
+			// Refresh extension bookmmark panel
 			await this.refresh();
 		} catch (error) {
 			console.error(`BookmarkProvider: remove: ${error.stack ? error.stack : error}`);
 			vscode.window.showErrorMessage(error.message);
 		}
+		// Sync bookmark array instance of QotdPanel.
 		QotdPanel.callQotdPanelListener("syncBookmarkState", { bookmarkTreeItems: StateManager.getState("bookmarkTreeItems") });
 	}
 }
