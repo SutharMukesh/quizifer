@@ -11,7 +11,7 @@ const userSchema = mongoose.Schema({
 		unique: true,
 	},
 	bookmarks: {
-		type: [mongoose.Types.ObjectId],
+		type: [{ _id: mongoose.Types.ObjectId, caption: String }],
 		unique: true,
 	},
 	upvotes: {

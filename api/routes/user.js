@@ -6,6 +6,7 @@ const passport = require("passport");
 const { Strategy } = require("passport-github");
 const ObjectId = require("mongoose").Types.ObjectId;
 const router = express.Router();
+const { auth } = require("./middleware")();
 
 passport.use(
 	new Strategy(
@@ -15,8 +16,6 @@ passport.use(
 			callbackURL: "http://localhost:3000/dev/auth/github/callback",
 		},
 		async (_accessToken, _refreshToken, profile, cb) => {
-			console.log(profile);
-
 			let user = await User.findOne({ githubId: profile.id });
 			if (user) {
 				user.name = profile.displayName;
@@ -33,77 +32,63 @@ passport.serializeUser((user, done) => {
 	done(null, user.accessToken);
 });
 
-const validateAccessToken = async (authHeader) => {
-	if (!authHeader) {
-		console.error("Auth Header Missing");
-		return false;
-	}
-	const token = authHeader.split(" ")[1];
-	if (!token) {
-		console.error("Token not found in auth header");
-		return false;
-	}
-
-	try {
-		const payload = await jwt.verify(token, process.env.JWT_SECRET);
-		return payload;
-	} catch (error) {
-		console.error(error);
-		return false;
-	}
-};
-
 router.get("/auth/github", passport.authenticate("github"));
 
 router.get("/auth/github/callback", passport.authenticate("github"), (req, res) => {
 	res.redirect(`http://localhost:54321/auth/${req.user.accessToken}`);
 });
 
-router.get("/me", async (req, res) => {
-	const payload = await validateAccessToken(req.headers.authorization);
-	if (payload) {
-		const user = await User.aggregate([
-			{
-				$match: {
-					_id: ObjectId(payload.userId),
-				},
-			},
-			{
-				$lookup: {
-					from: "qotds",
-					localField: "bookmarks",
-					foreignField: "_id",
-					as: "bookmarks",
-				},
-			},
-			{ $project: { bookmarks: { question: 0 } } },
-		]);
-		return res.send(user[0]);
+router.get("/me", auth, async (req, res) => {
+	if (req.headers.isAuthenticated) {
+		const user = await User.findById(req.headers.tokenPayload.userId);
+		return res.send(user);
 	}
 	return res.status(500).send({ user: null });
 });
 
-router.put("/bookmarks/:bookmark", async (req, res) => {
-	const payload = await validateAccessToken(req.headers.authorization);
-	if (payload) {
+router.put("/bookmarks/:bookmark", auth, async (req, res) => {
+	if (req.headers.isAuthenticated) {
 		const { bookmark } = req.params;
 		if (!bookmark) {
 			return res.status(500).send({ message: "No bookmark passed to add" });
 		}
-		await User.updateOne({ _id: ObjectId(payload.userId) }, { $addToSet: { bookmarks: ObjectId(bookmark) } });
+		const user = await User.findById(req.headers.tokenPayload.userId);
+		// check for upsert
+		let upsert = false;
+		const caption = req.body.caption || "Missing caption!";
+		user.bookmarks = user.bookmarks.map((bookmarkObj) => {
+			if (bookmarkObj._id.toString() === bookmark) {
+				upsert = true;
+				bookmarkObj.caption = caption;
+			}
+			return bookmarkObj;
+		});
+		if (!upsert) {
+			user.bookmarks.push({ _id: ObjectId(bookmark), caption });
+		}
+
+		await user.save();
 		return res.send({ message: "bookmark added" });
 	}
 	return res.status(500).send({ user: null });
 });
 
-router.delete("/bookmarks/:bookmark", async (req, res) => {
-	const payload = await validateAccessToken(req.headers.authorization);
-	if (payload) {
+router.delete("/bookmarks/:bookmark", auth, async (req, res) => {
+	if (req.headers.isAuthenticated) {
 		const { bookmark } = req.params;
 		if (!bookmark) {
 			return res.status(500).send({ message: "No bookmark passed to delete" });
 		}
-		await User.updateOne({ _id: ObjectId(payload.userId) }, { $pull: { bookmarks: ObjectId(bookmark) } });
+		await User.updateOne(
+			{
+				_id: ObjectId(req.headers.tokenPayload.userId),
+			},
+			{
+				$pull: {
+					bookmarks: { _id: ObjectId(bookmark) },
+				},
+			}
+		);
 		return res.send({ message: "bookmark deleted" });
 	}
 	return res.status(500).send({ user: null });
