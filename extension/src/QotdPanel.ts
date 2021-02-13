@@ -102,7 +102,7 @@ export class QotdPanel {
 					}
 					const { _id, caption, bookmark, accessToken } = data.value;
 					if (bookmark) {
-						await UserProvider.bookmarkProvider.saveBookmark(accessToken, { _id, caption });
+						await UserProvider.bookmarkProvider.upsertBookmark(accessToken, { _id, caption });
 					} else {
 						await UserProvider.bookmarkProvider.removeBookmark(accessToken, _id);
 					}

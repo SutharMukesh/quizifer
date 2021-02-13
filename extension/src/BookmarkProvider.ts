@@ -28,11 +28,13 @@ const progressBar = async function (fn: Function): Promise<void> {
 };
 
 export const bookmarkHelper = {
-	add: async function (accessToken: string, bookmarkId: string) {
+	upsert: async function (accessToken: string, bookmark: TreeItem) {
 		await progressBar(async () => {
 			let response: any = await axios.put(
-				`${API_BASE_URL}/bookmarks/${bookmarkId}`,
-				{},
+				`${API_BASE_URL}/bookmarks/${bookmark.id}`,
+				{
+					caption: bookmark.label,
+				},
 				{
 					headers: {
 						authorization: `Bearer ${accessToken}`,
@@ -56,6 +58,21 @@ export const bookmarkHelper = {
 	},
 };
 
+export async function showInputBox(label: string) {
+	const result = await vscode.window.showInputBox({
+		value: label,
+		// valueSelection: [2, 4],
+		validateInput: (value: string) => {
+			if (value) {
+				return null;
+			}
+			return "Please give a caption to bookmark this question";
+		},
+		prompt: "Edit caption for bookmark",
+	});
+	return result || label || "Missing Caption";
+}
+
 export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 	private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>();
 	readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
@@ -68,6 +85,9 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 		vscode.commands.registerCommand("quizifer.bookmark.refresh", async () => await this.refresh());
 		vscode.commands.registerCommand("quizifer.bookmark.delete", async (data) => {
 			await this.removeBookmark(accessToken, data.id);
+		});
+		vscode.commands.registerCommand("quizifer.bookmark.edit", async (data: TreeItem) => {
+			await this.upsertBookmark(accessToken, { _id: `${data.id}`, caption: `${data.label}` });
 		});
 	}
 
@@ -97,10 +117,24 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 		QotdPanel.callQotdPanelListener("syncBookmarkState", { bookmarkTreeItems: StateManager.getState("bookmarkTreeItems") });
 	}
 
-	async saveBookmark(accessToken: string, bookmark: Bookmark): Promise<void> {
+	async upsertBookmark(accessToken: string, bookmark: Bookmark): Promise<void> {
 		try {
-			await bookmarkHelper.add(accessToken, bookmark._id);
-			this.bookmarks = [...this.bookmarks, new TreeItem(bookmark)];
+			const result = await showInputBox(bookmark.caption);
+			bookmark.caption = result;
+			const bookmarkItem = new TreeItem(bookmark);
+			await bookmarkHelper.upsert(accessToken, bookmarkItem);
+
+			let upsert = false;
+			this.bookmarks = this.bookmarks.map((bookmarkObj) => {
+				if (bookmarkObj.id === bookmarkItem.id) {
+					upsert = true;
+					bookmarkObj = bookmarkItem;
+				}
+				return bookmarkObj;
+			});
+			if (!upsert) {
+				this.bookmarks = [...this.bookmarks, bookmarkItem];
+			}
 			await this.refresh();
 		} catch (error) {
 			console.error(`BookmarkProvider: add: ${error.stack ? error.stack : error}`);
@@ -126,14 +160,15 @@ class TreeItem extends vscode.TreeItem {
 	children: TreeItem[] | undefined;
 
 	constructor(bookmark: Bookmark, children?: TreeItem[]) {
-		super(bookmark.caption, children === undefined ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Expanded);
+		super(bookmark.caption || "caption-missing", children === undefined ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Expanded);
 		this.command = {
 			command: "quizifer.qotd",
-			title: "sometitle",
+			title: bookmark.caption || "caption-missing",
 			arguments: [bookmark],
 		};
 		this.id = bookmark._id;
-		// this.iconPath = this.getIcon(valueNode);
+		this.iconPath = new vscode.ThemeIcon("debug-breakpoint-unverified");
+		// this.iconPath = new vscode.ThemeIcon("notebook-render-output");
 		// this.contextValue = valueNode.type;
 		this.children = children;
 	}

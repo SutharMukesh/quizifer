@@ -42,7 +42,7 @@
         {
           "id": "quizifer-sidebar",
           "title": "Quizifer",
-          "icon": "media/question.svg"
+          "icon": "media/question-svgrepo.svg"
         }
       ]
     },
@@ -73,6 +73,9 @@
         {
           "command": "quizifer.bookmark.delete",
           "when": "view == quizifer.sidebar.bookmark"
+        },{
+          "command": "quizifer.bookmark.edit",
+          "when": "view == quizifer.sidebar.bookmark"
         }
       ]
     },
@@ -97,7 +100,7 @@
         "command": "quizifer.bookmark.refresh",
         "title": "Refresh",
         "category": "Quizifer",
-        "icon": {
+        "icon":{
           "light": "media/checklist.svg",
           "dark": "media/checklist.svg"
         }
@@ -105,6 +108,15 @@
       {
         "command": "quizifer.bookmark.delete",
         "title": "Delete",
+        "category": "Quizifer",
+        "icon": {
+          "light": "media/checklist.svg",
+          "dark": "media/checklist.svg"
+        }
+      },
+      {
+        "command": "quizifer.bookmark.edit",
+        "title": "Edit",
         "category": "Quizifer",
         "icon": {
           "light": "media/checklist.svg",
