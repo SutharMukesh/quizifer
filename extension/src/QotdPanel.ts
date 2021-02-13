@@ -145,7 +145,7 @@ export class QotdPanel {
 		// Uri to load styles into webview
 		// const stylesResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
 		const stylesMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
-		const stylesHighlightUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", vscode.window.activeColorTheme.kind === 1 ? "stackoverflow-light.min.css" : "stackoverflow-dark.min.css"));
+		const stylesHighlightUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", vscode.window.activeColorTheme.kind === 1 ? "light" : "dark", "stackoverflow.min.css"));
 
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = getNonce();
@@ -180,7 +180,7 @@ export class QotdPanel {
 
 	public static async callQotdPanelListener(listener: string, value: any): Promise<void> {
 		// Update all panel instances variables.
-		for (let _id in this.panels){
+		for (let _id in this.panels) {
 			this.panels[_id]._panel.webview.postMessage({ type: listener, value });
 		}
 		return;

@@ -75,7 +75,8 @@
           "when": "view == quizifer.sidebar.bookmark"
         },{
           "command": "quizifer.bookmark.edit",
-          "when": "view == quizifer.sidebar.bookmark"
+          "when": "view == quizifer.sidebar.bookmark",
+          "group": "inline"
         }
       ]
     },
@@ -100,27 +101,23 @@
         "command": "quizifer.bookmark.refresh",
         "title": "Refresh",
         "category": "Quizifer",
-        "icon":{
-          "light": "media/checklist.svg",
-          "dark": "media/checklist.svg"
+        "icon": {
+          "light": "media/light/refresh.svg",
+          "dark": "media/dark/refresh.svg"
         }
       },
       {
         "command": "quizifer.bookmark.delete",
         "title": "Delete",
-        "category": "Quizifer",
-        "icon": {
-          "light": "media/checklist.svg",
-          "dark": "media/checklist.svg"
-        }
+        "category": "Quizifer"
       },
       {
         "command": "quizifer.bookmark.edit",
         "title": "Edit",
         "category": "Quizifer",
         "icon": {
-          "light": "media/checklist.svg",
-          "dark": "media/checklist.svg"
+          "light": "media/light/edit.svg",
+          "dark": "media/dark/edit.svg"
         }
       }
     ]
