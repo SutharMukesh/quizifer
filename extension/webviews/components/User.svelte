@@ -21,7 +21,6 @@
 						});
 						console.log(response);
 						user = await response.json();
-						console.log(user);
 						tsvscode.postMessage({ type: "load-bookmarks", value: { accessToken, user } });
 					} catch (error) {
 						errorMessage = "Error fetching user info!";
@@ -66,3 +65,7 @@
 		}}>Login with Github</button
 	>
 {/if}
+<pre id="ascii">
+█▀█ █░█ █ ▀█ █ █▀▀ █▀▀ █▀█
+▀▀█ █▄█ █ █▄ █ █▀░ ██▄ █▀▄
+</pre>

@@ -90,7 +90,8 @@ export class UserProvider implements vscode.WebviewViewProvider {
 	}
 
 	private _getHtmlForWebview(webview: vscode.Webview): string {
-		const styleVscodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
+		const styleVscodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "css", "vscode.css"));
+		const styleUserUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "css", "user.css"));
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out", "compiled/user.js"));
 		// const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out", "compiled/user.css"));
 
@@ -107,6 +108,7 @@ export class UserProvider implements vscode.WebviewViewProvider {
             <meta http-equiv="Content-Security-Policy" content="img-src https: data:; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}';">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link href="${styleVscodeUri}" rel="stylesheet">
+			<link href="${styleUserUri}" rel="stylesheet">
             
             <script nonce="${nonce}">
                 const tsvscode = acquireVsCodeApi();

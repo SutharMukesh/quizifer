@@ -135,7 +135,7 @@ export class QotdPanel {
 	private async _getHtmlForWebview(webview: vscode.Webview) {
 		// And the uri we use to load this script in the webview
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out/compiled", "qotd.js"));
-		const stylesQotdUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "qotd.css"));
+		const stylesQotdUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "css", "qotd.css"));
 		const options = {
 			accessToken: await StateManager.getState("accessToken"),
 			bookmarkTreeItems: await StateManager.getState("bookmarkTreeItems"),
@@ -144,7 +144,7 @@ export class QotdPanel {
 
 		// Uri to load styles into webview
 		// const stylesResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
-		const stylesMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
+		const stylesMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "css", "vscode.css"));
 		const stylesHighlightUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", vscode.window.activeColorTheme.kind === 1 ? "light" : "dark", "stackoverflow.min.css"));
 
 		// Use a nonce to only allow specific scripts to be run
