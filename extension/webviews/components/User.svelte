@@ -65,7 +65,3 @@
 		}}>Login with Github</button
 	>
 {/if}
-<pre id="ascii">
-█▀█ █░█ █ ▀█ █ █▀▀ █▀▀ █▀█
-▀▀█ █▄█ █ █▄ █ █▀░ ██▄ █▀▄
-</pre>
