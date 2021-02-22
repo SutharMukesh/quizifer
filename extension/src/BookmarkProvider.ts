@@ -87,7 +87,7 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 			await this.removeBookmark(accessToken, data.id);
 		});
 		vscode.commands.registerCommand("quizifer.bookmark.edit", async (data: TreeItem) => {
-			await this.upsertBookmark(accessToken, { _id: `${data.id}`, caption: `${data.label}` });
+			await this.upsertBookmark(accessToken, { _id: `${data.id}`, caption: `${data.label}` }, "bookmark");
 		});
 	}
 
@@ -117,17 +117,18 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 		QotdPanel.callQotdPanelListener("syncBookmarkState", { bookmarkTreeItems: StateManager.getState("bookmarkTreeItems") });
 	}
 
-	async upsertBookmark(accessToken: string, bookmark: Bookmark): Promise<void> {
+	async upsertBookmark(accessToken: string, bookmark: Bookmark, source: string): Promise<void> {
 		try {
 			// Get edited caption
-			const result = await showInputBox(bookmark.caption);
-			// Dont do anything if caption is same after edit
-			if (bookmark.caption === result) {
-				return;
+			if(source === "bookmark"){
+				const result = await showInputBox(bookmark.caption);
+				// Dont do anything if caption is same after edit
+				if (bookmark.caption === result) {
+					return;
+				}
+				// upsert on server
+				bookmark.caption = result;
 			}
-
-			// upsert on server
-			bookmark.caption = result;
 			const bookmarkItem = new TreeItem(bookmark);
 			await bookmarkHelper.upsert(accessToken, bookmarkItem);
 

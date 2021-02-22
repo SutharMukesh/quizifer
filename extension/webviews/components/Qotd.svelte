@@ -5,7 +5,7 @@
 		accessToken: string | undefined;
 		bookmark: boolean;
 		_id: string;
-		caption: string;
+		title: string;
 		question: string;
 		loading: boolean;
 		upvotes: number;
@@ -35,7 +35,7 @@
 			return;
 		}
 
-		tsvscode.postMessage({ type: "updateBookmark", value: { _id: locals._id, caption: locals.caption, bookmark: !locals.bookmark, accessToken: locals.accessToken } });
+		tsvscode.postMessage({ type: "upsertBookmark", value: { _id: locals._id, caption: locals.title, bookmark: !locals.bookmark, accessToken: locals.accessToken } });
 		updateLocals({ bookmark: !locals.bookmark });
 	};
 
@@ -78,8 +78,8 @@
 							if (response.status !== 200) {
 								return updateLocals({ question: `<h3>${responseObj.message}</h3>` });
 							}
-							const { _id, question, caption } = responseObj;
-							updateLocals({ _id, question, caption });
+							const { _id, question, title } = responseObj;
+							updateLocals({ _id, question, title });
 
 							// check current QOTD is present in bookmark.
 							syncBookmarkState(_id, bookmarkTreeItems);

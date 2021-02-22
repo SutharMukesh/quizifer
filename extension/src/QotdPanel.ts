@@ -96,13 +96,13 @@ export class QotdPanel {
 
 		webview.onDidReceiveMessage(async (data) => {
 			switch (data.type) {
-				case "updateBookmark": {
+				case "upsertBookmark": {
 					if (!data.value) {
 						return;
 					}
 					const { _id, caption, bookmark, accessToken } = data.value;
 					if (bookmark) {
-						await UserProvider.bookmarkProvider.upsertBookmark(accessToken, { _id, caption });
+						await UserProvider.bookmarkProvider.upsertBookmark(accessToken, { _id, caption }, "qotd");
 					} else {
 						await UserProvider.bookmarkProvider.removeBookmark(accessToken, _id);
 					}
