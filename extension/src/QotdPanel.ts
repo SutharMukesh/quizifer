@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { API_BASE_URL } from "./constants";
 import { getNonce } from "./getNonce";
-import { StateManager } from "./StateManager";
 
 export class QotdPanel {
 	/**
@@ -77,7 +76,6 @@ export class QotdPanel {
 
 		// this._panel.webview.html = this._getLoadingView();
 		this._panel.webview.html = await this._getHtmlForWebview(webview);
-		await StateManager.setState("lastOpenedOnDate", new Date().toDateString());
 
 		webview.onDidReceiveMessage(async (data) => {
 			switch (data.type) {
@@ -103,7 +101,7 @@ export class QotdPanel {
 		// And the uri we use to load this script in the webview
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out/compiled", "qotd.js"));
 		const options = {};
-		
+
 		// Uri to load styles into webview
 		// const stylesResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
 		const stylesMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));

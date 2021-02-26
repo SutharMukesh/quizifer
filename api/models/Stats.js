@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const qotdSchema = mongoose.Schema({
+const statsSchema = mongoose.Schema({
 	date: {
 		type: String,
 		required: true,
@@ -8,16 +8,16 @@ const qotdSchema = mongoose.Schema({
 	},
 	notified: {
 		type: Number,
-		required: true
+		required: true,
 	},
 	attempted: {
 		type: Number,
-		required: true
+		required: true,
 	},
 	ignored: {
 		type: Number,
-		required: true
-	}
+		required: true,
+	},
 });
 
-module.exports = mongoose.model("Stats", qotdSchema);
+module.exports = mongoose.model("Stats", statsSchema);

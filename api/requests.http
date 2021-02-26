@@ -1,0 +1,8 @@
+### Increase notified stats
+PUT http://127.0.0.1:3000/dev/stats/n
+
+### Increase notification ignored stats
+PUT http://127.0.0.1:3000/dev/stats/i
+
+### Increase notification attempted stats
+PUT http://127.0.0.1:3000/dev/stats/a

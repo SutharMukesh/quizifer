@@ -1,18 +1,24 @@
 import * as vscode from "vscode";
 import { QotdPanel } from "./QotdPanel";
 import { StateManager } from "./StateManager";
+import { statModule } from "./stats";
 
-function showNotification(context: vscode.ExtensionContext) {
-	if (context.globalState.get("lastOpenedOnDate") != new Date().toDateString()) {
-		vscode.window.showInformationMessage("Question of the day 🎁", { title: "Let's do it!" }, { title: "Not today" }).then((data) => {
+async function showNotification(context: vscode.ExtensionContext) {
+	if (StateManager.getState("lastOpenedOnDate") !== new Date().toDateString()) {
+		vscode.window.showInformationMessage("Question of the day 🎁", { title: "Let's do it!" }, { title: "Not today" }).then(async (data) => {
 			if (data?.title === "Let's do it!") {
+				await statModule.attempted();
 				vscode.commands.executeCommand("quizifer.qotd");
+			} else {
+				await statModule.ignored();
 			}
 		});
+		await StateManager.setState("lastOpenedOnDate", new Date().toDateString());
+		await statModule.notified();
 	}
 }
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 	console.log('Extension "quizifer" is now active!!!');
 	StateManager.globalState = context.globalState;
 
@@ -33,12 +39,13 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	// notify everyday when vscode starts
-	showNotification(context);
+	await showNotification(context);
 
 	// notify everyday even if user doesn't closes vscode for many days
-	setInterval(function () {
-		showNotification(context);
-	}, 21600000);
+	// by checking the lastOpenedOnDate with todays date every 1 hr
+	setInterval(async function () {
+		await showNotification(context);
+	}, 3600000);
 }
 
 // this method is called when your extension is deactivated
