@@ -16,6 +16,10 @@ functions:
           path: /qotd
           method: ANY
           cors: true
-
+      - http: 
+          path: /stats/{event}
+          method: PUT
+          cors: true
+      
 plugins:
   - serverless-offline

@@ -14,9 +14,13 @@ pre {
 	padding: 1rem !important;
 	border-radius: 5px;
 }
+pre code {
+	padding: 0 !important;
+}
+
 code {
 	display: inline !important;
-	padding: 0 0.5rem !important;
+	padding: 0.1rem 0.3rem !important;
 	border-radius: 2px;
 }
 
