@@ -20,15 +20,15 @@ const cache = function (req, res, next) {
 	});
 };
 
-router.get("/", cache, async (req, res) => {
+router.get("/", async (req, res) => {
 	try {
 		const today = moment().utc().format("YYYY/MM/DD");
 		const questionData = await Qotd.findOne({ date: today });
 		const html = parser(questionData.question, req.query);
 
-		const todayEnd = new Date().setHours(23, 59, 59, 999);
-		client.set("qotd", html);
-		client.expireat("qotd", parseInt(todayEnd / 1000));
+		// const todayEnd = new Date().setHours(23, 59, 59, 999);
+		// client.set("qotd", html);
+		// client.expireat("qotd", parseInt(todayEnd / 1000));
 
 		res.send(html);
 	} catch (error) {

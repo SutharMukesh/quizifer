@@ -10,7 +10,7 @@
 				case "on-load":
 					try {
 						const options = message.value;
-						const response: any = await fetch(`${API_BASE_URL}/qotd?${new URLSearchParams(options)}`);
+						const response: any = await fetch(`${API_BASE_URL}/qotd`);
 						responseData = await response.text();
 					} catch (error) {
 						console.error(error);
