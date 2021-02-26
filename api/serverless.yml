@@ -20,7 +20,14 @@ functions:
           path: /stats/{event}
           method: PUT
           cors: true
-      
+    
+custom:
+  warmup:
+    appWarmer:
+      enabled: true
+      events:
+        - schedule: rate(5 minutes)
+    
 plugins:
   - serverless-offline
   - serverless-plugin-warmup
