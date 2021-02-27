@@ -6,6 +6,12 @@
 	let accessToken: string | null = null;
 	let user: User | null = null;
 	let errorMessage: string | null = null;
+
+	function callProviderFunction(options: { type: string; value: any }) {
+		console.log(`User: calling ${options.type}`);
+		return tsvscode.postMessage(options);
+	}
+
 	onMount(async () => {
 		window.addEventListener("message", async (event) => {
 			const message = event.data;
@@ -21,10 +27,10 @@
 						});
 						console.log(response);
 						user = await response.json();
-						tsvscode.postMessage({ type: "load-bookmarks", value: { accessToken, user } });
+						callProviderFunction({ type: "load-bookmarks", value: { accessToken, user } });
 					} catch (error) {
 						errorMessage = "Error fetching user info!";
-						tsvscode.postMessage({ type: "onError", value: error.message ? error.message : error });
+						callProviderFunction({ type: "onError", value: error.message ? error.message : error });
 					}
 					loading = false;
 					break;
@@ -33,8 +39,7 @@
 					break;
 			}
 		});
-		console.log("calling get-token");
-		tsvscode.postMessage({ type: "get-token", value: undefined });
+		callProviderFunction({ type: "get-token", value: undefined });
 	});
 </script>
 
@@ -48,19 +53,13 @@
 		on:click={() => {
 			accessToken = "";
 			user = null;
-			tsvscode.postMessage({
-				type: "logout",
-				value: undefined,
-			});
+			callProviderFunction({ type: "logout", value: undefined });
 		}}>Logout</button
 	>
 {:else}
 	<button
 		on:click={() => {
-			tsvscode.postMessage({
-				type: "login",
-				value: undefined,
-			});
+			callProviderFunction({ type: "login", value: undefined });
 			loading = true;
 		}}>Login with Github</button
 	>

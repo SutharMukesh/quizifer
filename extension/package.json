@@ -73,7 +73,8 @@
         {
           "command": "quizifer.bookmark.delete",
           "when": "view == quizifer.sidebar.bookmark"
-        },{
+        },
+        {
           "command": "quizifer.bookmark.edit",
           "when": "view == quizifer.sidebar.bookmark",
           "group": "inline"

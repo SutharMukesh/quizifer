@@ -30,7 +30,7 @@ async function getQuestionById(id) {
 	return questionData;
 }
 
-router.get("/", auth, cache, async (req, res) => {
+router.get("/", auth, async (req, res) => {
 	try {
 		const { id } = req.query;
 		let questionData;
@@ -48,8 +48,8 @@ router.get("/", auth, cache, async (req, res) => {
 			var { key, data } = isAuthenticated ? { key: "qotd-auth", data: questionData } : { key: "qotd", data: questionData.question };
 		}
 
-		client.set(key, key.includes("auth") ? JSON.stringify(data) : data);
-		client.expireat(key, parseInt(todayEnd / 1000));
+		// client.set(key, key.includes("auth") ? JSON.stringify(data) : data);
+		// client.expireat(key, parseInt(todayEnd / 1000));
 
 		// Return the entire question mongo document if user is logged in.
 
