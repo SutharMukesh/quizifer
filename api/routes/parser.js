@@ -1,7 +1,7 @@
 const hljs = require("highlight.js");
 const Md = require("markdown-it");
 
-module.exports = function (data, options) {
+module.exports = function (data) {
 	let md = Md({
 		html: true,
 		highlight: function (str, lang) {

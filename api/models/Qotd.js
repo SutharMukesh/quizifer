@@ -11,6 +11,9 @@ const qotdSchema = mongoose.Schema({
 		required: true,
 		unique: true,
 	},
+	title: {
+		type: String,
+	},
 });
 
 module.exports = mongoose.model("Qotd", qotdSchema);

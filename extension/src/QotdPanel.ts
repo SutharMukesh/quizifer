@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import { API_BASE_URL } from "./constants";
 import { getNonce } from "./getNonce";
+import { StateManager } from "./StateManager";
+import { UserProvider } from "./UserProvider";
 
 export class QotdPanel {
 	/**
@@ -8,46 +10,62 @@ export class QotdPanel {
 	 */
 	public static currentPanel: QotdPanel | undefined;
 
-	public static readonly viewType = "quiz";
+	public static readonly viewType = "qotd";
 
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
+	private readonly _id: string;
 	private _disposables: vscode.Disposable[] = [];
+	private static panels: any = new Map();
 
-	public static createOrShow(extensionUri: vscode.Uri) {
+	public static createOrShow(extensionUri: vscode.Uri, _arguments?: { _id?: string; caption?: string }) {
 		const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
 
-		// If we already have a panel, show it.
-		if (QotdPanel.currentPanel) {
-			QotdPanel.currentPanel._panel.reveal(column);
-			QotdPanel.currentPanel._update();
+		const _id = _arguments?._id || "qotd";
+		const title = _arguments?.caption || "Question of the day";
+		/**
+		 * This was a real headache!!
+		 * Conventional panel reveal code only works if you have one panel to show at a time
+		 * so i need to create a hashmap which stores different panel objects
+		 * and reveal accordingly
+		 */
+		if (this.panels.has(_id)) {
+			this.panels.get(_id)._panel.reveal(column);
 			return;
 		}
 
 		// Otherwise, create a new panel.
-		const panel = vscode.window.createWebviewPanel(QotdPanel.viewType, "Question of the day", column || vscode.ViewColumn.One, {
+		const panel = vscode.window.createWebviewPanel(QotdPanel.viewType, title, column || vscode.ViewColumn.Active, this.getWebviewOptions(extensionUri));
+
+		const qotdPanel = new QotdPanel(panel, extensionUri, _id);
+		this.panels.set(_id, qotdPanel);
+	}
+
+	public static getWebviewOptions(extensionUri: vscode.Uri): any {
+		return {
 			// Enable javascript in the webview
 			enableScripts: true,
-
+			// dont load the question again if users is just switching between existing panels.
+			retainContextWhenHidden: true,
 			// And restrict the webview to only loading content from our extension's `media` directory.
 			localResourceRoots: [vscode.Uri.joinPath(extensionUri, "media"), vscode.Uri.joinPath(extensionUri, "out/compiled")],
-		});
-
-		QotdPanel.currentPanel = new QotdPanel(panel, extensionUri);
+		};
 	}
 
-	public static kill() {
-		QotdPanel.currentPanel?.dispose();
-		QotdPanel.currentPanel = undefined;
+	public static kill(_id: string) {
+		this.panels.get(_id)?.dispose();
+		this.panels.delete(_id);
 	}
 
-	public static revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
-		QotdPanel.currentPanel = new QotdPanel(panel, extensionUri);
+	public static revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, _id: string) {
+		const qotdPanel = new QotdPanel(panel, extensionUri, _id);
+		this.panels.set(_id, qotdPanel);
 	}
 
-	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
+	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, _id: string) {
 		this._panel = panel;
 		this._extensionUri = extensionUri;
+		this._id = _id;
 
 		// Set the webview's initial html content
 		this._update();
@@ -58,7 +76,7 @@ export class QotdPanel {
 	}
 
 	public dispose() {
-		QotdPanel.currentPanel = undefined;
+		QotdPanel.panels.delete(this._id);
 
 		// Clean up our resources
 		this._panel.dispose();
@@ -74,11 +92,28 @@ export class QotdPanel {
 	private async _update() {
 		const webview = this._panel.webview;
 
-		// this._panel.webview.html = this._getLoadingView();
 		this._panel.webview.html = await this._getHtmlForWebview(webview);
 
 		webview.onDidReceiveMessage(async (data) => {
 			switch (data.type) {
+				case "upsertBookmark": {
+					if (!data.value) {
+						return;
+					}
+					const { _id, caption, bookmark, accessToken } = data.value;
+					if (bookmark) {
+						await UserProvider.bookmarkProvider.upsertBookmark(accessToken, { _id, caption }, "qotd");
+					} else {
+						await UserProvider.bookmarkProvider.removeBookmark(accessToken, _id);
+					}
+					break;
+				}
+
+				case "openSideBar": {
+					vscode.commands.executeCommand("workbench.view.extension.quizifer-sidebar");
+					break;
+				}
+
 				case "onInfo": {
 					if (!data.value) {
 						return;
@@ -100,18 +135,22 @@ export class QotdPanel {
 	private async _getHtmlForWebview(webview: vscode.Webview) {
 		// And the uri we use to load this script in the webview
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out/compiled", "qotd.js"));
-		const options = {};
+		const stylesQotdUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "css", "qotd.css"));
+		const options = {
+			accessToken: await StateManager.getState("accessToken"),
+			bookmarkTreeItems: await StateManager.getState("bookmarkTreeItems"),
+			id: this._id,
+		};
 
 		// Uri to load styles into webview
 		// const stylesResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
-		const stylesMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
-		const stylesHighlightUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", vscode.window.activeColorTheme.kind === 1 ? "stackoverflow-light.min.css" : "stackoverflow-dark.min.css"));
-		const stylesQotdUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "qotd.css"));
+		const stylesMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "css", "vscode.css"));
+		const stylesHighlightUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", vscode.window.activeColorTheme.kind === 1 ? "light" : "dark", "stackoverflow.min.css"));
 
 		// Use a nonce to only allow specific scripts to be run
 		const nonce = getNonce();
 
-		webview.postMessage({ type: "on-load", value: options });
+		webview.postMessage({ type: "get-qotd", value: options });
 
 		return `<!DOCTYPE html>
 			<html lang="en">
@@ -125,7 +164,7 @@ export class QotdPanel {
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
 					<link href="" rel="stylesheet">
 					<link href="${stylesMainUri}" rel="stylesheet">
-					
+
 					<link href="${stylesHighlightUri}" rel="stylesheet">					
 					<link href="${stylesQotdUri}" rel="stylesheet">
 					<script nonce="${nonce}">
@@ -138,5 +177,12 @@ export class QotdPanel {
 				<script src="${scriptUri}" nonce="${nonce}"/>
 			</html>`;
 	}
+
+	public static async callQotdPanelListener(listener: string, value: any): Promise<void> {
+		// Update all panel instances variables.
+		for (let _id in this.panels) {
+			this.panels[_id]._panel.webview.postMessage({ type: listener, value });
+		}
+		return;
+	}
 }
-// <link href="${stylesResetUri}" rel="stylesheet">
