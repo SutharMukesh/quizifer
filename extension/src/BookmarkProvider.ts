@@ -78,24 +78,16 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 	readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
 	private bookmarks: TreeItem[];
-
+	private commandsToDispose: any = {};
 	constructor(accessToken: string) {
 		this.bookmarks = [];
 		vscode.window.registerTreeDataProvider("quizifer.sidebar.bookmark", this);
-		vscode.commands.getCommands(true).then((commands) => {
-			if (!commands.includes("quizifer.bookmark.refresh")) {
-				vscode.commands.registerCommand("quizifer.bookmark.refresh", async () => await this.refresh());
-			}
-			if (!commands.includes("quizifer.bookmark.delete")) {
-				vscode.commands.registerCommand("quizifer.bookmark.delete", async (data) => {
-					await this.removeBookmark(accessToken, data.id);
-				});
-			}
-			if (!commands.includes("quizifer.bookmark.edit")) {
-				vscode.commands.registerCommand("quizifer.bookmark.edit", async (data: TreeItem) => {
-					await this.upsertBookmark(accessToken, { _id: `${data.id}`, caption: `${data.label}` }, "bookmark");
-				});
-			}
+		this.commandsToDispose.refresh = vscode.commands.registerCommand("quizifer.bookmark.refresh", async () => await this.refresh());
+		this.commandsToDispose.delete = vscode.commands.registerCommand("quizifer.bookmark.delete", async (data) => {
+			await this.removeBookmark(accessToken, data.id);
+		});
+		this.commandsToDispose.edit = vscode.commands.registerCommand("quizifer.bookmark.edit", async (data: TreeItem) => {
+			await this.upsertBookmark(accessToken, { _id: `${data.id}`, caption: `${data.label}` }, "bookmark");
 		});
 	}
 
@@ -121,6 +113,9 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 
 	async onlogout(): Promise<void> {
 		this.bookmarks = [];
+		this.commandsToDispose.refresh.dispose();
+		this.commandsToDispose.delete.dispose();
+		this.commandsToDispose.edit.dispose();
 		await this.refresh();
 		QotdPanel.callQotdPanelListener("syncBookmarkState", { bookmarkTreeItems: StateManager.getState("bookmarkTreeItems") });
 	}
