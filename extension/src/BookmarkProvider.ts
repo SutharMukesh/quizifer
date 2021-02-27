@@ -82,12 +82,20 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 	constructor(accessToken: string) {
 		this.bookmarks = [];
 		vscode.window.registerTreeDataProvider("quizifer.sidebar.bookmark", this);
-		vscode.commands.registerCommand("quizifer.bookmark.refresh", async () => await this.refresh());
-		vscode.commands.registerCommand("quizifer.bookmark.delete", async (data) => {
-			await this.removeBookmark(accessToken, data.id);
-		});
-		vscode.commands.registerCommand("quizifer.bookmark.edit", async (data: TreeItem) => {
-			await this.upsertBookmark(accessToken, { _id: `${data.id}`, caption: `${data.label}` }, "bookmark");
+		vscode.commands.getCommands(true).then((commands) => {
+			if (!commands.includes("quizifer.bookmark.refresh")) {
+				vscode.commands.registerCommand("quizifer.bookmark.refresh", async () => await this.refresh());
+			}
+			if (!commands.includes("quizifer.bookmark.delete")) {
+				vscode.commands.registerCommand("quizifer.bookmark.delete", async (data) => {
+					await this.removeBookmark(accessToken, data.id);
+				});
+			}
+			if (!commands.includes("quizifer.bookmark.edit")) {
+				vscode.commands.registerCommand("quizifer.bookmark.edit", async (data: TreeItem) => {
+					await this.upsertBookmark(accessToken, { _id: `${data.id}`, caption: `${data.label}` }, "bookmark");
+				});
+			}
 		});
 	}
 
@@ -120,7 +128,7 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 	async upsertBookmark(accessToken: string, bookmark: Bookmark, source: string): Promise<void> {
 		try {
 			// Get edited caption
-			if(source === "bookmark"){
+			if (source === "bookmark") {
 				const result = await showInputBox(bookmark.caption);
 				// Dont do anything if caption is same after edit
 				if (bookmark.caption === result) {
