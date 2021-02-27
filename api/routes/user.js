@@ -13,7 +13,7 @@ passport.use(
 		{
 			clientID: config.GITHUB_CLIENT_ID,
 			clientSecret: config.GITHUB_CLIENT_SECRET,
-			callbackURL: "http://localhost:3000/dev/auth/github/callback",
+			callbackURL: config.GITHUB_CALLBACK_URL,
 		},
 		async (_accessToken, _refreshToken, profile, cb) => {
 			let user = await User.findOne({ githubId: profile.id });

@@ -5,7 +5,6 @@ const bodyParser = require("body-parser");
 const morgan = require("morgan");
 const cors = require("cors");
 const passport = require("passport");
-const cors = require("cors");
 
 const stats = require("./routes/stats");
 const qotd = require("./routes/qotd");
