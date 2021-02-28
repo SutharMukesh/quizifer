@@ -80,7 +80,7 @@
 							});
 							const responseObj = JSON.parse(await response.text());
 							if (response.status !== 200) {
-								return updateLocals({ question: `<h3>${responseObj.message}</h3>` });
+								throw new Error(`<h3>${responseObj.message ? responseObj.message : responseObj}</h3>`);
 							}
 							const { _id, question, title } = responseObj;
 							updateLocals({ _id, question, title });
@@ -91,9 +91,14 @@
 							// for user that are not logged in
 							tsvscode.postMessage({ type: "onDebug", value: "Getting qotd" });
 							response = await fetch(`${API_BASE_URL}/qotd`);
-							updateLocals({ question: await response.text(), upvotes: 0, downvotes: 0, bookmark: false });
+							const responseObj = JSON.parse(await response.text());
+							if (response.status !== 200) {
+								throw new Error(`<h3>${responseObj.message ? responseObj.message : responseObj}</h3>`);
+							}
+							updateLocals({ question: responseObj, upvotes: 0, downvotes: 0, bookmark: false });
 						}
 					} catch (error) {
+						updateLocals({ question: error.message ? error.message : error });
 						tsvscode.postMessage({ type: "onError", value: error.message ? error.message : error, stack: `Catch in get-qotd: ${error.stack ? error.stack : error}` });
 					}
 					updateLocals({ loading: false });

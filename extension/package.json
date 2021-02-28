@@ -2,7 +2,7 @@
   "name": "quizifer",
   "displayName": "Quizifer",
   "description": "Learn a language consistenty while using vscode.",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "publisher": "mukeshsuthar",
   "icon": "docs/icon.png",
   "author": {

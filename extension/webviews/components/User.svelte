@@ -23,6 +23,9 @@
 								authorization: `Bearer ${accessToken}`,
 							},
 						});
+						if (response.status !== 200) {
+							throw new Error(await response.text());
+						}
 						user = await response.json();
 						callProviderFunction({ type: "load-bookmarks", value: { accessToken, user } });
 					} catch (error) {
