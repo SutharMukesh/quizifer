@@ -4,6 +4,7 @@ import axios from "axios";
 import { API_BASE_URL } from "./constants";
 import { QotdPanel } from "./QotdPanel";
 import { StateManager } from "./StateManager";
+import { getLogger } from "./logger";
 
 const progressBar = async function (fn: Function): Promise<void> {
 	await vscode.window.withProgress(
@@ -29,6 +30,7 @@ const progressBar = async function (fn: Function): Promise<void> {
 
 export const bookmarkHelper = {
 	upsert: async function (accessToken: string, bookmark: TreeItem) {
+		getLogger("BookmarkProvider.bookmarkHelper.upsert").info(`upserting bookmark ${bookmark.label}`);
 		await progressBar(async () => {
 			let response: any = await axios.put(
 				`${API_BASE_URL}/bookmarks/${bookmark.id}`,
@@ -46,6 +48,7 @@ export const bookmarkHelper = {
 		});
 	},
 	remove: async function (accessToken: string, bookmarkId: string) {
+		getLogger("BookmarkProvider.bookmarkHelper.remove").info(`removing bookmark ${bookmarkId}`);
 		await progressBar(async () => {
 			let response: any = await axios.delete(`${API_BASE_URL}/bookmarks/${bookmarkId}`, {
 				headers: {
@@ -80,6 +83,8 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 	private bookmarks: TreeItem[];
 	private commandsToDispose: any = {};
 	constructor(accessToken: string) {
+		const logger = getLogger("BookmarkProvider.constructor");
+		logger.info(`Initializing bookmark commands`);
 		this.bookmarks = [];
 		vscode.window.registerTreeDataProvider("quizifer.sidebar.bookmark", this);
 		this.commandsToDispose.refresh = vscode.commands.registerCommand("quizifer.bookmark.refresh", async () => await this.refresh());
@@ -107,11 +112,13 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 	}
 
 	async refresh(): Promise<void> {
+		getLogger("BookmarkProvider.refresh").info("Refreshing bookmark");
 		this._onDidChangeTreeData.fire();
 		await StateManager.setState("bookmarkTreeItems", this.bookmarks);
 	}
 
 	async onlogout(): Promise<void> {
+		getLogger("BookmarkProvider.onLogout").info("reset bookmark and dispose commands");
 		this.bookmarks = [];
 		this.commandsToDispose.refresh.dispose();
 		this.commandsToDispose.delete.dispose();
@@ -121,9 +128,11 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 	}
 
 	async upsertBookmark(accessToken: string, bookmark: Bookmark, source: string): Promise<void> {
+		const logger = getLogger("BookmarkProvider.upsertBookmark");
 		try {
 			// Get edited caption
 			if (source === "bookmark") {
+				logger.info(`Editing bookmark caption`);
 				const result = await showInputBox(bookmark.caption);
 				// Dont do anything if caption is same after edit
 				if (bookmark.caption === result) {
@@ -136,6 +145,7 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 			await bookmarkHelper.upsert(accessToken, bookmarkItem);
 
 			// upsert on extension.
+			logger.info(`Upserting change on extension`);
 			let upsert = false;
 			this.bookmarks = this.bookmarks.map((bookmarkObj) => {
 				if (bookmarkObj.id === bookmarkItem.id) {
@@ -150,7 +160,7 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 			// Refresh extension bookmark panel
 			await this.refresh();
 		} catch (error) {
-			console.error(`BookmarkProvider: upsertBookmark: ${error.stack ? error.stack : error}`);
+			logger.error(error.stack ? error.stack : error);
 			vscode.window.showErrorMessage(error.message);
 		}
 		// Sync bookmark array instance of QotdPanel.
@@ -158,6 +168,7 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 	}
 
 	async removeBookmark(accessToken: string, _id: string): Promise<void> {
+		const logger = getLogger("BookmarkProvider.removeBookmark");
 		try {
 			// Delete from server
 			await bookmarkHelper.remove(accessToken, _id);
@@ -166,7 +177,7 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 			// Refresh extension bookmmark panel
 			await this.refresh();
 		} catch (error) {
-			console.error(`BookmarkProvider: remove: ${error.stack ? error.stack : error}`);
+			logger.error(error.stack ? error.stack : error);
 			vscode.window.showErrorMessage(error.message);
 		}
 		// Sync bookmark array instance of QotdPanel.

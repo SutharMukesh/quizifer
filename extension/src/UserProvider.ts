@@ -5,7 +5,7 @@ import { getNonce } from "./getNonce";
 import { StateManager } from "./StateManager";
 import { BookmarkProvider } from "./BookmarkProvider";
 import { QotdPanel } from "./QotdPanel";
-
+import { getLogger } from "./logger";
 export class UserProvider implements vscode.WebviewViewProvider {
 	_view?: vscode.WebviewView;
 	_doc?: vscode.TextDocument;
@@ -13,6 +13,7 @@ export class UserProvider implements vscode.WebviewViewProvider {
 	constructor(private readonly _extensionUri: vscode.Uri) {}
 
 	public resolveWebviewView(webviewView: vscode.WebviewView) {
+		const logger = getLogger("UserProvider");
 		this._view = webviewView;
 		webviewView.webview.options = {
 			enableScripts: true,
@@ -23,10 +24,15 @@ export class UserProvider implements vscode.WebviewViewProvider {
 
 		webviewView.webview.onDidReceiveMessage(async (data) => {
 			switch (data.type) {
+				case "onDebug": {
+					logger.debug(data.value);
+					break;
+				}
 				case "onInfo": {
 					if (!data.value) {
 						return;
 					}
+					logger.info(data.value);
 					vscode.window.showInformationMessage(data.value);
 					break;
 				}
@@ -34,6 +40,7 @@ export class UserProvider implements vscode.WebviewViewProvider {
 					if (!data.value) {
 						return;
 					}
+					logger.error(data.value);
 					vscode.window.showErrorMessage(data.value);
 					break;
 				}
@@ -42,6 +49,7 @@ export class UserProvider implements vscode.WebviewViewProvider {
 					// This is called when user view is loaded.
 					const accessToken = StateManager.getState("accessToken");
 					if (accessToken) {
+						logger.info(`${data.type}: user logged in, initializing bookmarkProvider`);
 						// Initialize bookmark Provider if user is already logged in
 						webviewView.webview.postMessage({ type: "get-user-info", value: accessToken });
 					} else {
@@ -52,6 +60,7 @@ export class UserProvider implements vscode.WebviewViewProvider {
 				}
 
 				case "login": {
+					logger.info(`User login initiate`);
 					authenticate(async () => {
 						const accessToken: string | any = StateManager.getState("accessToken");
 
@@ -67,6 +76,7 @@ export class UserProvider implements vscode.WebviewViewProvider {
 				}
 
 				case "load-bookmarks": {
+					logger.info(`Loading bookmarks`);
 					// this is triggered after get-user-info
 					const { user } = data.value;
 					const bookmarks = user.bookmarks || [];
@@ -75,6 +85,7 @@ export class UserProvider implements vscode.WebviewViewProvider {
 				}
 
 				case "logout": {
+					logger.info(`User logout initiate`);
 					// Empty bookmarks.
 					await UserProvider.bookmarkProvider.onlogout();
 					await StateManager.setState("accessToken", null);

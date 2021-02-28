@@ -3,6 +3,7 @@ import { API_BASE_URL } from "./constants";
 import { getNonce } from "./getNonce";
 import { StateManager } from "./StateManager";
 import { UserProvider } from "./UserProvider";
+import { getLogger } from "./logger";
 
 export class QotdPanel {
 	/**
@@ -19,6 +20,7 @@ export class QotdPanel {
 	private static panels: any = new Map();
 
 	public static createOrShow(extensionUri: vscode.Uri, _arguments?: { _id?: string; caption?: string }) {
+		const logger = getLogger("QotdPanel");
 		const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
 
 		const _id = _arguments?._id || "qotd";
@@ -30,11 +32,13 @@ export class QotdPanel {
 		 * and reveal accordingly
 		 */
 		if (this.panels.has(_id)) {
+			logger.info(`Revealing existing panel`);
 			this.panels.get(_id)._panel.reveal(column);
 			return;
 		}
 
 		// Otherwise, create a new panel.
+		logger.info(`Creating panel for ${title}`);
 		const panel = vscode.window.createWebviewPanel(QotdPanel.viewType, title, column || vscode.ViewColumn.Active, this.getWebviewOptions(extensionUri));
 
 		const qotdPanel = new QotdPanel(panel, extensionUri, _id);
@@ -90,6 +94,7 @@ export class QotdPanel {
 	}
 
 	private async _update() {
+		const logger = getLogger("QotdPanel._update");
 		const webview = this._panel.webview;
 
 		this._panel.webview.html = await this._getHtmlForWebview(webview);
@@ -97,6 +102,7 @@ export class QotdPanel {
 		webview.onDidReceiveMessage(async (data) => {
 			switch (data.type) {
 				case "upsertBookmark": {
+					logger.info(`Inside ${data.type}`);
 					if (!data.value) {
 						return;
 					}
@@ -110,10 +116,14 @@ export class QotdPanel {
 				}
 
 				case "openSideBar": {
-					vscode.commands.executeCommand("workbench.view.extension.quizifer-sidebar");
+					logger.info(`Opening sideBar`);
+					vscode.commands.executeCommand("quizifer.sidebar.user.focus");
 					break;
 				}
-
+				case "onDebug": {
+					logger.debug(`${data.type}: ${data.value}`);
+					break;
+				}
 				case "onInfo": {
 					if (!data.value) {
 						return;
@@ -125,6 +135,7 @@ export class QotdPanel {
 					if (!data.value) {
 						return;
 					}
+					logger.error(`${data.type}: ${data.stack ? data.stack : data.value}`);
 					vscode.window.showErrorMessage(data.value);
 					break;
 				}
@@ -179,6 +190,7 @@ export class QotdPanel {
 	}
 
 	public static async callQotdPanelListener(listener: string, value: any): Promise<void> {
+		getLogger("QotdPanel.callQotdPanelListener").info(`Post message to qotd svelte code: ${JSON.stringify(Object.keys(value))}`);
 		// Update all panel instances variables.
 		for (let _id in this.panels) {
 			this.panels[_id]._panel.webview.postMessage({ type: listener, value });

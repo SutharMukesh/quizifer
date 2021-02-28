@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import { null_to_empty } from "svelte/internal";
 	import type { Bookmark } from "../../src/types";
 	interface Locals {
 		accessToken: string | undefined;
@@ -40,6 +41,7 @@
 	};
 
 	function syncBookmarkState(_id: string, bookmarkTreeItems: Array<Bookmark>) {
+		tsvscode.postMessage({ type: "onDebug", value: "checking if qotd is bookmarked!" });
 		if (bookmarkTreeItems.some((bookmarkTreeItem: any) => bookmarkTreeItem.id == _id)) {
 			updateLocals({ bookmark: true });
 		} else {
@@ -57,19 +59,21 @@
 						// Check if the current QOTD is present in updated bookmarkTreeItems.
 						syncBookmarkState(locals._id, bookmarkTreeItems);
 					} catch (error) {
-						tsvscode.postMessage({ type: "onError", value: error.stack ? error.stack : error });
+						tsvscode.postMessage({ type: "onError", value: error.message ? error.message : error, stack: `Catch in syncBookmarkState: ${error.stack ? error.stack : error}` });
 					}
 					break;
 				}
 
 				case "get-qotd":
+					let response: Response;
 					try {
 						const { accessToken, id, bookmarkTreeItems } = message.value;
 						locals = { ...locals, ...{ accessToken } };
 
 						if (accessToken) {
+							tsvscode.postMessage({ type: "onDebug", value: "Getting qotd with an accessToken" });
 							// for user that are Logged in
-							let response: any = await fetch(`${API_BASE_URL}/qotd?${id ? new URLSearchParams({ id }) : {}}`, {
+							response = await fetch(`${API_BASE_URL}/qotd?${id ? new URLSearchParams({ id }) : {}}`, {
 								headers: {
 									authorization: `Bearer ${accessToken}`,
 								},
@@ -85,11 +89,12 @@
 							syncBookmarkState(_id, bookmarkTreeItems);
 						} else {
 							// for user that are not logged in
-							const response: any = await fetch(`${API_BASE_URL}/qotd`);
+							tsvscode.postMessage({ type: "onDebug", value: "Getting qotd" });
+							response = await fetch(`${API_BASE_URL}/qotd`);
 							updateLocals({ question: await response.text(), upvotes: 0, downvotes: 0, bookmark: false });
 						}
 					} catch (error) {
-						tsvscode.postMessage({ type: "onError", value: error.stack ? error.stack : error });
+						tsvscode.postMessage({ type: "onError", value: error.message ? error.message : error, stack: `Catch in get-qotd: ${error.stack ? error.stack : error}` });
 					}
 					updateLocals({ loading: false });
 					return;

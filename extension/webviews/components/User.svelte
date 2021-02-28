@@ -8,7 +8,6 @@
 	let errorMessage: string | null = null;
 
 	function callProviderFunction(options: { type: string; value: any }) {
-		console.log(`User: calling ${options.type}`);
 		return tsvscode.postMessage(options);
 	}
 
@@ -17,7 +16,6 @@
 			const message = event.data;
 			switch (message.type) {
 				case "get-user-info":
-					console.log("inside get-user-info");
 					accessToken = message.value;
 					try {
 						const response = await fetch(`${API_BASE_URL}/me`, {
@@ -25,7 +23,6 @@
 								authorization: `Bearer ${accessToken}`,
 							},
 						});
-						console.log(response);
 						user = await response.json();
 						callProviderFunction({ type: "load-bookmarks", value: { accessToken, user } });
 					} catch (error) {

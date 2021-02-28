@@ -14,10 +14,6 @@ const userSchema = mongoose.Schema({
 		type: [{ _id: mongoose.Types.ObjectId, caption: String }],
 		unique: true,
 	},
-	upvotes: {
-		type: [String],
-		unique: true,
-	},
 });
 
 module.exports = mongoose.model("User", userSchema);
