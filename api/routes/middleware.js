@@ -37,7 +37,9 @@ module.exports = (client) => {
 					if (!token) {
 						return res.send({ question: "Token not found in auth header" });
 					}
+					console.log(`Token: ${token}`)
 					req.headers.tokenPayload = await jwt.verify(token, process.env.JWT_SECRET);
+					console.log(`req.headers.tokenPayload: ${req.headers.tokenPayload}`)
 					req.headers.isAuthenticated = true;
 				} catch (error) {
 					console.error(`Middleware: auth: ${error.stack ? error.stack : error}`);

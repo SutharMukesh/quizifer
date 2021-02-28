@@ -38,60 +38,76 @@ router.get("/auth/github/callback", passport.authenticate("github"), (req, res) 
 	res.redirect(`http://localhost:54321/auth/${req.user.accessToken}`);
 });
 
-router.get("/me", auth, async (req, res) => {
-	if (req.headers.isAuthenticated) {
-		const user = await User.findById(req.headers.tokenPayload.userId);
-		return res.send(user);
-	}
-	return res.status(500).send({ user: null });
-});
-
-router.put("/bookmarks/:bookmark", auth, async (req, res) => {
-	if (req.headers.isAuthenticated) {
-		const { bookmark } = req.params;
-		if (!bookmark) {
-			return res.status(500).send({ message: "No bookmark passed to add" });
-		}
-		const user = await User.findById(req.headers.tokenPayload.userId);
-		// check for upsert
-		let upsert = false;
-		const caption = req.body.caption || "Missing caption!";
-		user.bookmarks = user.bookmarks.map((bookmarkObj) => {
-			if (bookmarkObj._id.toString() === bookmark) {
-				upsert = true;
-				bookmarkObj.caption = caption;
+router.get("/me", auth, async (req, res, next) => {
+	try {
+		console.log(`req.headers.isAuthenticated: ${req.headers.isAuthenticated}`);
+		if (req.headers.isAuthenticated) {
+			if (!req.headers.tokenPayload.userId) {
+				throw new Error(`Userid is null`);
 			}
-			return bookmarkObj;
-		});
-		if (!upsert) {
-			user.bookmarks.push({ _id: ObjectId(bookmark), caption });
+			const user = await User.findById(req.headers.tokenPayload.userId);
+			return res.send(user);
 		}
-
-		await user.save();
-		return res.send({ message: "bookmark added" });
+		return res.status(500).send({ user: null });
+	} catch (error) {
+		next(error);
 	}
-	return res.status(500).send({ user: null });
 });
 
-router.delete("/bookmarks/:bookmark", auth, async (req, res) => {
-	if (req.headers.isAuthenticated) {
-		const { bookmark } = req.params;
-		if (!bookmark) {
-			return res.status(500).send({ message: "No bookmark passed to delete" });
+router.put("/bookmarks/:bookmark", auth, async (req, res, next) => {
+	try {
+		if (req.headers.isAuthenticated) {
+			const { bookmark } = req.params;
+			if (!bookmark) {
+				return res.status(500).send({ message: "No bookmark passed to add" });
+			}
+			const user = await User.findById(req.headers.tokenPayload.userId);
+			// check for upsert
+			let upsert = false;
+			const caption = req.body.caption || "Missing caption!";
+			user.bookmarks = user.bookmarks.map((bookmarkObj) => {
+				if (bookmarkObj._id.toString() === bookmark) {
+					upsert = true;
+					bookmarkObj.caption = caption;
+				}
+				return bookmarkObj;
+			});
+			if (!upsert) {
+				user.bookmarks.push({ _id: ObjectId(bookmark), caption });
+			}
+
+			await user.save();
+			return res.send({ message: "bookmark added" });
 		}
-		await User.updateOne(
-			{
-				_id: ObjectId(req.headers.tokenPayload.userId),
-			},
-			{
-				$pull: {
-					bookmarks: { _id: ObjectId(bookmark) },
+		return res.status(500).send({ user: null });
+	} catch (error) {
+		next(error);
+	}
+});
+
+router.delete("/bookmarks/:bookmark", auth, async (req, res, next) => {
+	try {
+		if (req.headers.isAuthenticated) {
+			const { bookmark } = req.params;
+			if (!bookmark) {
+				return res.status(500).send({ message: "No bookmark passed to delete" });
+			}
+			await User.updateOne(
+				{
+					_id: ObjectId(req.headers.tokenPayload.userId),
 				},
-			}
-		);
-		return res.send({ message: "bookmark deleted" });
+				{
+					$pull: {
+						bookmarks: { _id: ObjectId(bookmark) },
+					},
+				}
+			);
+			return res.send({ message: "bookmark deleted" });
+		}
+		return res.status(500).send({ user: null });
+	} catch (error) {
+		next(error);
 	}
-	return res.status(500).send({ user: null });
 });
 
 module.exports = router;

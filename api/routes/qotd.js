@@ -30,7 +30,7 @@ async function getQuestionById(id) {
 	return questionData;
 }
 
-router.get("/", auth, async (req, res) => {
+router.get("/", auth, async (req, res, next) => {
 	try {
 		const { id } = req.query;
 		let questionData;
@@ -59,19 +59,17 @@ router.get("/", auth, async (req, res) => {
 		// If no user logged in the return just the question.
 		return res.send(questionData.question);
 	} catch (error) {
-		console.log(error.stack ? error.stack : error);
-		return res.status(500).json({ message: error.message });
+		next(error);
 	}
 });
 
-router.post("/", async (req, res) => {
+router.post("/", async (req, res, next) => {
 	try {
 		const question = new Qotd(req.body);
 		await question.save();
 		res.json({ message: "saved" });
 	} catch (error) {
-		console.log(error.stack ? error.stack : error);
-		res.status(500).json({ message: error.message });
+		next(error);
 	}
 });
 

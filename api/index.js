@@ -21,6 +21,12 @@ app.use(morgan("tiny"));
 
 app.use("/qotd", qotd);
 app.use("/stats", stats);
-app.use(user)
+app.use(user);
+
+// Error Handling Middleware - it should be the last middleware added in express.
+app.use((err, req, res, next) => {
+	console.error(err.stack ? err.stack : err);
+	res.status(500).send({ status: "unsuccess", message: err.message ? err.message : err });
+});
 
 module.exports.handler = serverless(app);
