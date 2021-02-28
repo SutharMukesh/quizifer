@@ -2,20 +2,22 @@ import * as constants from "./constants";
 import * as vscode from "vscode";
 import * as polka from "polka";
 import { StateManager } from "./StateManager";
+import { getLogger } from "./logger";
 
 export function authenticate(fn: () => void) {
+	const logger = getLogger("authenticate");
 	const app = polka();
-
 	app.get("/auth/:token", async (req, res) => {
+		logger.info(`Auth route /auth/:token called`);
 		const { token } = req.params;
 		if (!token) {
-			res.end(`<h1>Something went wrong</h1>`);
+			res.end(`<h3>Something went wrong</h3>`);
 			return;
 		}
 
 		await StateManager.setState("accessToken", token);
 		fn();
-		res.end(`<h1>Auth was Successfull, you can close this window</h1>`);
+		res.end(`<h3>Auth was Successful, you can close this window</h3>`);
 
 		app.server?.close();
 	});
@@ -24,7 +26,7 @@ export function authenticate(fn: () => void) {
 		if (err) {
 			vscode.window.showErrorMessage(err.message);
 		}
-		console.log("Server Started");
+		logger.info("Server Started");
 		vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(`${constants.API_BASE_URL}/auth/github`));
 	});
 }
