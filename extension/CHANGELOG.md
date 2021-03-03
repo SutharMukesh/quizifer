@@ -1,5 +1,9 @@
 # Change Log
 
+## V2.0.2
+- Add new trademark icon on footer
+- bug fixes
+
 ## V2.0.0
 - Add Github user auth.
 - Now user can bookmark the question they found interesting.

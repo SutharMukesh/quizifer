@@ -36,7 +36,7 @@ body {
 }
 
 footer {
-	text-align: right;
+	text-align: center;
 	flex-shrink: 0;
 }
 
@@ -66,4 +66,21 @@ li {
 
 #bookmark-svg {
 	fill: #ccccccbf;
+}
+
+
+.logo-trademark {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.logo-trademark-icon{
+	width: 50px;
+	filter: grayscale(1);
+	padding: 10px;
+}
+
+.line{
+	color: gray;
 }

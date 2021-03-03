@@ -155,6 +155,7 @@ export class QotdPanel {
 
 		// Uri to load styles into webview
 		// const stylesResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
+		const quiziferLogoUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "icon.png"));
 		const stylesMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "css", "vscode.css"));
 		const stylesHighlightUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", vscode.window.activeColorTheme.kind === 1 ? "light" : "dark", "stackoverflow.min.css"));
 
@@ -171,7 +172,7 @@ export class QotdPanel {
 						Use a content security policy to only allow loading images from https or from our extension directory,
 						and only allow scripts that have a specific nonce.
 					-->
-					<meta http-equiv="Content-Security-Policy" content=" img-src https: data:; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}';">
+					<meta http-equiv="Content-Security-Policy" content=" img-src ${webview.cspSource} https: data:; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}';">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
 					<link href="" rel="stylesheet">
 					<link href="${stylesMainUri}" rel="stylesheet">
@@ -181,6 +182,7 @@ export class QotdPanel {
 					<script nonce="${nonce}">
 						const tsvscode = acquireVsCodeApi();
 						const API_BASE_URL = ${JSON.stringify(API_BASE_URL)}; 
+						const quiziferLogoUri = "${quiziferLogoUri}";
 					</script>
 				</head>
 				<body>

@@ -1,12 +1,13 @@
 import * as vscode from "vscode";
-interface PostMessageOpts{
-	value:any;
-	type:any;
-	stack?:string;
+interface PostMessageOpts {
+	value: any;
+	type: any;
+	stack?: string;
 }
 declare global {
 	const tsvscode: {
-		postMessage: (options:PostMessageOpts)=>void
+		postMessage: (options: PostMessageOpts) => void;
 	};
 	const API_BASE_URL: string;
+	const quiziferLogoUri: string;
 }
