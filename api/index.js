@@ -17,7 +17,7 @@ app.use(cors());
 app.use(passport.initialize());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(morgan("tiny"));
+app.use(morgan("combined"));
 
 app.use("/qotd", qotd);
 app.use("/stats", stats);
