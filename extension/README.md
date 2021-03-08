@@ -1,24 +1,29 @@
 # Quizifer
+Vscode extension for Javascript learners.
 
-A vscode extension which focus on "consistently" learning a language.
+> The concept is simple, solve one javascript question a day!
 
-## Question of the day (QOTD)
+## Features
 
-- Its dead simple, just one question per day.
-- You'll get a notification once a day when you start you're vscode.
+#### *Reminds you everyday.*
+Quizifer picks one tricky question a day and notifies you when you're using vscode.
+ 
+![./docs/gif/Notify_User.gif](./docs/gif/Notify_User.gif)
+#### *Github Authentication*
+Login to use below bookmark feature
 
-    ![./docs/autostart.gif](./docs/autostart.gif)
+![./docs/gif/Login_User.gif](./docs/gif/Login_User.gif)
+#### *Bookmarks*
+- Found a question interesting? **Bookmark** it.
+- Want to give your own caption? **Edit** it.
+- Prep time? **Browse** your favourite questions.
+- Bookmarked a way easy question for you? **Delete** it.
 
-- Or you can always trigger from `command pallete`
+![./docs/gif/bookmarks.gif](./docs/gif/bookmarks.gif)
 
-    ![./docs/command-pallete.gif](./docs/command-pallete.gif)
-
-- And remember
-
-    ![./docs/meme.png](./docs/meme.png)
+#### And remember
+![./docs/meme.png](./docs/meme.png)
 
 ### Credits
 
-### Javascript questions
-
-- [lydiahallie](https://github.com/lydiahallie/javascript-questions)
+- Special Thanks to [lydiahallie](https://github.com/lydiahallie/javascript-questions) for javascript questions
