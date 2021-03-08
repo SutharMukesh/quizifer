@@ -48,13 +48,21 @@
 {:else if errorMessage}
 	<div>{errorMessage}</div>
 {:else if user}
-	<h3>{user.name}</h3>
+	<div>
+		<h3>{user.name}</h3>
+		<button
+			on:click={() => {
+				accessToken = "";
+				user = null;
+				callProviderFunction({ type: "logout", value: undefined });
+			}}>Logout</button
+		>
+	</div>
 	<button
+		class="qotdButton"
 		on:click={() => {
-			accessToken = "";
-			user = null;
-			callProviderFunction({ type: "logout", value: undefined });
-		}}>Logout</button
+			callProviderFunction({ type: "openQotd", value: undefined });
+		}}>Let's see Question of the day!</button
 	>
 {:else}
 	<button

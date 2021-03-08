@@ -1,0 +1,14 @@
+html,
+body {
+	height: 100%;
+}
+
+body{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.qotdButton{
+    margin-bottom: 15px;
+}

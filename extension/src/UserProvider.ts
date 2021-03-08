@@ -92,6 +92,12 @@ export class UserProvider implements vscode.WebviewViewProvider {
 					vscode.window.showInformationMessage("logout success");
 					break;
 				}
+
+				case "openQotd":{
+					logger.info(`User clicked on Qotd button`);
+					vscode.commands.executeCommand("quizifer.qotd");
+					break;
+				}
 			}
 		});
 	}
