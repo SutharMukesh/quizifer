@@ -18,9 +18,9 @@ async function showNotification(context: vscode.ExtensionContext) {
 			} else {
 				await statModule.ignored();
 			}
-			await StateManager.setState("lastInteractOnDate", new Date().toDateString());
 		});
 		await statModule.notified();
+		await StateManager.setState("lastInteractOnDate", new Date().toDateString());
 	}
 }
 

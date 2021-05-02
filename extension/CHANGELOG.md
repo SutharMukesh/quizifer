@@ -1,9 +1,11 @@
 # Change Log
 
+## V2.0.5
+- Fix Annoying multiple notifications
 ## V2.0.4
 - Add Qotd Button on user section
-- Beautify After signin page
-- Update readme which includes bookmark gifs.
+- Beautify After signIn page
+- Update readme which includes bookmark Gifs.
 
 ## V2.0.3
 - Add output channel to help with logs
