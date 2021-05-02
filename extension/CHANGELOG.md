@@ -1,5 +1,13 @@
 # Change Log
 
+## V2.0.4
+- Add Qotd Button on user section
+- Beautify After signin page
+- Update readme which includes bookmark gifs.
+
+## V2.0.3
+- Add output channel to help with logs
+  
 ## V2.0.2
 - Add new trademark icon on footer
 - bug fixes
