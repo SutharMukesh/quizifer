@@ -1,20 +1,19 @@
 const moment = require("moment");
 const express = require("express");
 const Qotd = require("../models/Qotd");
-const config = require("../config");
+// const config = require("../config");
 const parser = require("./parser");
-const redis = require("redis");
+// const redis = require("redis");
 const router = express.Router();
-const client = redis.createClient(config.redis);
-const { cache, auth } = require("./middleware")(client);
+// const client = redis.createClient(config.redis);
+const { cache, auth } = require("./middleware")({});
 
 /**
  * Get QOTD in HTML format
  * @returns {String} Html string.
  */
-async function getQotd() {
-	const today = moment().utc().format("YYYY/MM/DD");
-	const questionData = await Qotd.findOne({ date: today });
+async function getQuestionByDate(date) {
+	const questionData = await Qotd.findOne({ date });
 	questionData.question = parser(questionData.question);
 	return questionData;
 }
@@ -32,9 +31,9 @@ async function getQuestionById(id) {
 
 router.get("/", auth, async (req, res, next) => {
 	try {
-		const { id } = req.query;
+		const { id, date } = req.query;
 		let questionData;
-		const todayEnd = new Date().setHours(23, 59, 59, 999);
+		// const todayEnd = new Date().setHours(23, 59, 59, 999);
 
 		const { isAuthenticated } = req.headers;
 
@@ -42,9 +41,12 @@ router.get("/", auth, async (req, res, next) => {
 			// Fetch Question based on the id
 			questionData = await getQuestionById(id);
 			var { key, data } = isAuthenticated ? { key: `${id}-auth`, data: questionData } : { key: id, data: questionData.question };
+		} else if (date) {
+			questionData = await getQuestionByDate(date);
 		} else {
 			// Fetch Question of the day if id is not passed
-			questionData = await getQotd();
+			const today = moment().utc().format("YYYY/MM/DD");
+			questionData = await getQuestionByDate(today);
 			var { key, data } = isAuthenticated ? { key: "qotd-auth", data: questionData } : { key: "qotd", data: questionData.question };
 		}
 

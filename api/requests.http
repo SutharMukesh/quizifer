@@ -3,23 +3,26 @@ GET https://d64re11kk0.execute-api.ap-south-1.amazonaws.com/dev/qotd
 
 ### ----- QOTD ------ 
 ### Get question of the day
-GET http://127.0.0.1:3000/dev/qotd
+GET http://127.0.0.1:3000/v1/qotd
 
 ### Get question of the day using an question _id
-GET http://127.0.0.1:3000/dev/qotd?id=qotd
+GET http://127.0.0.1:3000/v1/qotd?id=qotd
+
+### Get question of the day using date
+GET http://127.0.0.1:3000/v1/qotd?date=2021/01/08
 
 ### Get question of the day mongo document
-GET http://127.0.0.1:3000/dev/qotd?id=qotd
+GET http://127.0.0.1:3000/v1/qotd?id=qotd
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MDBhNGU5OGNiYzE5YzJlYjM2NjIxMTQiLCJpYXQiOjE2MTE2NjUyNTMsImV4cCI6MTY0MzIyMjg1M30.Dw7dqIE14WHH7StZixAUgkK28s76LsmH7iRrcGFCrd0
 
 
 ### ----- User/Bookmark -----
 ### Get user info
-GET http://127.0.0.1:3000/dev/me
+GET http://127.0.0.1:3000/v1/me
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MDBhNGU5OGNiYzE5YzJlYjM2NjIxMTQiLCJpYXQiOjE2MTE2NjUyNTMsImV4cCI6MTY0MzIyMjg1M30.Dw7dqIE14WHH7StZixAUgkK28s76LsmH7iRrcGFCrd0
 
 ### Add new bookmark or update the existing one
-PUT http://127.0.0.1:3000/dev/bookmarks/5fe8cc5ed85a41173c02e3fd
+PUT http://127.0.0.1:3000/v1/bookmarks/5fe8cc5ed85a41173c02e3fd
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MDBhNGU5OGNiYzE5YzJlYjM2NjIxMTQiLCJpYXQiOjE2MTE2NjUyNTMsImV4cCI6MTY0MzIyMjg1M30.Dw7dqIE14WHH7StZixAUgkK28s76LsmH7iRrcGFCrd0
 
@@ -28,15 +31,15 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MDBhN
 }
 
 ### Delete existing bookmark
-DELETE http://127.0.0.1:3000/dev/bookmarks/5fe8cc5ed85a41173c02e3fe
+DELETE http://127.0.0.1:3000/v1/bookmarks/5fe8cc5ed85a41173c02e3fe
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MDBhNGU5OGNiYzE5YzJlYjM2NjIxMTQiLCJpYXQiOjE2MTE2NjUyNTMsImV4cCI6MTY0MzIyMjg1M30.Dw7dqIE14WHH7StZixAUgkK28s76LsmH7iRrcGFCrd0
 
 ### ----- Notification Stats -----
 ### Increase notified stats
-PUT http://127.0.0.1:3000/dev/stats/n
+PUT http://127.0.0.1:3000/v1/stats/n
 
 ### Increase notification ignored stats
-PUT http://127.0.0.1:3000/dev/stats/i
+PUT http://127.0.0.1:3000/v1/stats/i
 
 ### Increase notification attempted stats
-PUT http://127.0.0.1:3000/dev/stats/a
+PUT http://127.0.0.1:3000/v1/stats/a
