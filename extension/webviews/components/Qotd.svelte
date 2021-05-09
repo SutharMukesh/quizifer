@@ -10,6 +10,7 @@
 		loading: boolean;
 		upvotes: number;
 		downvotes: number;
+		date: string; // YYYY/MM/DD
 	}
 	let quiziferLogo = quiziferLogoUri;
 	const svg = {
@@ -21,6 +22,8 @@
 		},
 	};
 	let locals: Locals;
+	const QOTD_API_BASE_URL = `${API_BASE_URL}/qotd`;
+
 	const updateLocals = (value: object) => {
 		locals = { ...locals, ...value };
 		return;
@@ -49,6 +52,98 @@
 		}
 	}
 
+	function callProviderFunction(options: { type: string; value: any }) {
+		return tsvscode.postMessage(options);
+	}
+
+	async function getQotd(options: { accessToken?: string; id?: string; date?: string } = {}): Promise<any> {
+		const { accessToken, id, date } = options;
+		callProviderFunction({ type: "onDebug", value: `GetQotd for ${date}` });
+		// Set header for authorized Users
+		let headers = {};
+		if (accessToken) {
+			headers = {
+				authorization: `Bearer ${accessToken}`,
+			};
+		}
+
+		let qotdApiUrl = QOTD_API_BASE_URL;
+		if (date && accessToken) {
+			qotdApiUrl += `?${new URLSearchParams({ date })}`;
+		} else if (id) {
+			qotdApiUrl += `?${new URLSearchParams({ id })}`;
+		}
+
+		const response = await fetch(qotdApiUrl, {
+			headers,
+		});
+
+		const responseTxt = await response.text();
+		// tsvscode.postMessage({ type: "onDebug", value: responseTxt });
+
+		// Send JSON Parsed Response only in case of auth users
+		if (accessToken) {
+			const responseObj = JSON.parse(responseTxt);
+
+			if (response.status !== 200) {
+				throw new Error(`<h3>${responseObj.message ? responseObj.message : responseObj}</h3>`);
+			}
+			return responseObj;
+		} else {
+			// Send Response Txt in case of normal user
+			if (response.status !== 200) {
+				throw new Error(`<h3>${responseTxt}</h3>`);
+			}
+			return responseTxt;
+		}
+	}
+
+	async function onClickLeft() {
+		const { accessToken, date } = locals;
+
+		if (!accessToken) {
+			callProviderFunction({ type: "openSideBar", value: undefined });
+			callProviderFunction({ type: "onError", value: "Please Login to get previous question." });
+			return;
+		}
+		callProviderFunction({ type: "onDebug", value: `OnClickLeft date: ${date}` });
+		const qotdDate = new Date(date);
+		const yesterday = new Date(qotdDate);
+
+		yesterday.setDate(yesterday.getDate() - 1);
+		const yesterdayWithOffsetTimezoneFixed = new Date(yesterday.getTime() - yesterday.getTimezoneOffset() * 60000);
+		const dateToFetch = yesterdayWithOffsetTimezoneFixed.toISOString().split("T")[0].replaceAll("-", "/");
+
+		callProviderFunction({ type: "onDebug", value: `OnClickLeft dateToFetch: ${dateToFetch}` });
+
+		callProviderFunction({ type: "getQotdFromDate", value: { date: dateToFetch } });
+	}
+
+	async function onClickRight() {
+		const { accessToken, date } = locals;
+
+		if (!accessToken) {
+			callProviderFunction({ type: "openSideBar", value: undefined });
+			callProviderFunction({ type: "onError", value: "Please Login to get previous question." });
+			return;
+		}
+
+		tsvscode.postMessage({ type: "onInfo", value: `date: ${date}` });
+		const qotdDate = new Date(date);
+		const today = new Date();
+		const nextDate = new Date(qotdDate);
+		nextDate.setDate(nextDate.getDate() + 1);
+
+		if (nextDate > today) {
+			return callProviderFunction({ type: "onError", value: "Sorry you have to wait till tomorrow." });
+		}
+		const nextDateWithOffsetTimezoneFixed = new Date(nextDate.getTime() - nextDate.getTimezoneOffset() * 60000);
+		const dateToFetch = nextDateWithOffsetTimezoneFixed.toISOString().split("T")[0].replaceAll("-", "/");
+		tsvscode.postMessage({ type: "onInfo", value: dateToFetch });
+
+		callProviderFunction({ type: "getQotdFromDate", value: { date: dateToFetch } });
+	}
+
 	onMount(async () => {
 		window.addEventListener("message", async (event) => {
 			const message = event.data;
@@ -65,41 +160,26 @@
 				}
 
 				case "get-qotd":
-					let response: Response;
 					try {
-						const { accessToken, id, bookmarkTreeItems } = message.value;
+						const { accessToken, id, bookmarkTreeItems, date: dateToFetch } = message.value;
 						locals = { ...locals, ...{ accessToken } };
 
 						if (accessToken) {
-							tsvscode.postMessage({ type: "onDebug", value: "Getting qotd with an accessToken" });
 							// for user that are Logged in
-							response = await fetch(`${API_BASE_URL}/qotd?${id ? new URLSearchParams({ id }) : {}}`, {
-								headers: {
-									authorization: `Bearer ${accessToken}`,
-								},
-							});
-							const responseTxt = await response.text();
-							tsvscode.postMessage({ type: "onDebug", value: responseTxt });
-							
-							const responseObj = JSON.parse(responseTxt);
-							
-							if (response.status !== 200) {
-								throw new Error(`<h3>${responseObj.message ? responseObj.message : responseObj}</h3>`);
-							}
-							const { _id, question, title } = responseObj;
-							updateLocals({ _id, question, title });
+							tsvscode.postMessage({ type: "onDebug", value: "Getting qotd with an accessToken" });
+
+							const { _id, question, title, date } = await getQotd({ accessToken, id, date: dateToFetch });
+
+							updateLocals({ _id, question, title, date });
 
 							// check current QOTD is present in bookmark.
 							syncBookmarkState(_id, bookmarkTreeItems);
 						} else {
 							// for user that are not logged in
 							tsvscode.postMessage({ type: "onDebug", value: "Getting qotd" });
-							response = await fetch(`${API_BASE_URL}/qotd`);
-							const responseTxt = await response.text();
-		
-							if (response.status !== 200) {
-								throw new Error(`<h3>${responseTxt}</h3>`);
-							}
+
+							const responseTxt = await getQotd();
+
 							updateLocals({ question: responseTxt, upvotes: 0, downvotes: 0, bookmark: false });
 						}
 					} catch (error) {
@@ -116,13 +196,16 @@
 </script>
 
 <div class="container">
-	{#if locals.loading}<style>
-			.container {
-				background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' version='1.1' width='575' height='6px'%3E %3Cstyle%3E circle { animation: ball 2.5s cubic-bezier(0.000, 1.000, 1.000, 0.000) infinite; fill: %23bbb; } %23balls { animation: balls 2.5s linear infinite; } %23circle2 { animation-delay: 0.1s; } %23circle3 { animation-delay: 0.2s; } %23circle4 { animation-delay: 0.3s; } %23circle5 { animation-delay: 0.4s; } @keyframes ball { from { transform: none; } 20% { transform: none; } 80% { transform: translateX(864px); } to { transform: translateX(864px); } } @keyframes balls { from { transform: translateX(-40px); } to { transform: translateX(30px); } } %3C/style%3E %3Cg id='balls'%3E %3Ccircle class='circle' id='circle1' cx='-115' cy='3' r='3'/%3E %3Ccircle class='circle' id='circle2' cx='-130' cy='3' r='3' /%3E %3Ccircle class='circle' id='circle3' cx='-145' cy='3' r='3' /%3E %3Ccircle class='circle' id='circle4' cx='-160' cy='3' r='3' /%3E %3Ccircle class='circle' id='circle5' cx='-175' cy='3' r='3' /%3E %3C/g%3E %3C/svg%3E") 50% no-repeat;
-				height: 200px;
-			}
-		</style>{:else if locals.question}
-		<div class="content-div">
+	<button class="go-left-container" on:click={onClickLeft}>Left</button>
+	<div class="content-div">
+		{#if locals.loading}
+			<style>
+				.content-div {
+					width: 600px;
+					background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' version='1.1' width='575' height='6px'%3E %3Cstyle%3E circle { animation: ball 2.5s cubic-bezier(0.000, 1.000, 1.000, 0.000) infinite; fill: %23bbb; } %23balls { animation: balls 2.5s linear infinite; } %23circle2 { animation-delay: 0.1s; } %23circle3 { animation-delay: 0.2s; } %23circle4 { animation-delay: 0.3s; } %23circle5 { animation-delay: 0.4s; } @keyframes ball { from { transform: none; } 20% { transform: none; } 80% { transform: translateX(864px); } to { transform: translateX(864px); } } @keyframes balls { from { transform: translateX(-40px); } to { transform: translateX(30px); } } %3C/style%3E %3Cg id='balls'%3E %3Ccircle class='circle' id='circle1' cx='-115' cy='3' r='3'/%3E %3Ccircle class='circle' id='circle2' cx='-130' cy='3' r='3' /%3E %3Ccircle class='circle' id='circle3' cx='-145' cy='3' r='3' /%3E %3Ccircle class='circle' id='circle4' cx='-160' cy='3' r='3' /%3E %3Ccircle class='circle' id='circle5' cx='-175' cy='3' r='3' /%3E %3C/g%3E %3C/svg%3E") 50% no-repeat;
+					height: 200px;
+				}
+			</style>{:else if locals.question}
 			<div class="bookmark">
 				<div class="metric-container">
 					<svg on:click={bookmarkListener} class="bookmark-icon">
@@ -133,15 +216,16 @@
 			<div class="question">
 				{@html locals.question}
 			</div>
-		</div>
-	{:else}
-		<div>Somethings Wrong!</div>
-	{/if}
+		{:else}
+			<div>Somethings Wrong!</div>
+		{/if}
+	</div>
+	<button class="go-right-container" on:click={onClickRight}>Right</button>
 </div>
 <footer>
 	<div class="logo-trademark">
 		<p class="line">——————————————————————————————</p>
-		<img src={quiziferLogo} alt="logo" class="logo-trademark-icon"/>
+		<img src={quiziferLogo} alt="logo" class="logo-trademark-icon" />
 		<p class="line">——————————————————————————————</p>
 	</div>
 </footer>

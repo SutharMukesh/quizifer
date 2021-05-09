@@ -87,7 +87,7 @@ export class UserProvider implements vscode.WebviewViewProvider {
 				case "logout": {
 					logger.info(`User logout initiate`);
 					// Empty bookmarks.
-					await UserProvider.bookmarkProvider.onlogout();
+					await UserProvider.bookmarkProvider.onLogout();
 					await StateManager.setState("accessToken", null);
 					vscode.window.showInformationMessage("logout success");
 					break;

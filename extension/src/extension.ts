@@ -29,9 +29,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	try {
 		logger.info(`Extension "quizifer" is now active!!!`);
 
+		// Initialize UserProvider for sidebar here
 		const userProvider = new UserProvider(context.extensionUri);
 		StateManager.globalState = context.globalState;
 
+		// Registering userProvider as sidebar
 		vscode.window.registerWebviewViewProvider("quizifer.sidebar.user", userProvider);
 
 		context.subscriptions.push(

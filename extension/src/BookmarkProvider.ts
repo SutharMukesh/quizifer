@@ -86,11 +86,15 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 		const logger = getLogger("BookmarkProvider.constructor");
 		logger.info(`Initializing bookmark commands`);
 		this.bookmarks = [];
+		
 		vscode.window.registerTreeDataProvider("quizifer.sidebar.bookmark", this);
+		
 		this.commandsToDispose.refresh = vscode.commands.registerCommand("quizifer.bookmark.refresh", async () => await this.refresh());
+
 		this.commandsToDispose.delete = vscode.commands.registerCommand("quizifer.bookmark.delete", async (data) => {
 			await this.removeBookmark(accessToken, data.id);
 		});
+		
 		this.commandsToDispose.edit = vscode.commands.registerCommand("quizifer.bookmark.edit", async (data: TreeItem) => {
 			await this.upsertBookmark(accessToken, { _id: `${data.id}`, caption: `${data.label}` }, "bookmark");
 		});
@@ -117,7 +121,7 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 		await StateManager.setState("bookmarkTreeItems", this.bookmarks);
 	}
 
-	async onlogout(): Promise<void> {
+	async onLogout(): Promise<void> {
 		getLogger("BookmarkProvider.onLogout").info("reset bookmark and dispose commands");
 		this.bookmarks = [];
 		this.commandsToDispose.refresh.dispose();
@@ -134,7 +138,7 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 			if (source === "bookmark") {
 				logger.info(`Editing bookmark caption`);
 				const result = await showInputBox(bookmark.caption);
-				// Dont do anything if caption is same after edit
+				// Don't do anything if caption is same after edit
 				if (bookmark.caption === result) {
 					return;
 				}
@@ -174,7 +178,7 @@ export class BookmarkProvider implements vscode.TreeDataProvider<TreeItem> {
 			await bookmarkHelper.remove(accessToken, _id);
 			// Delete from extension
 			this.bookmarks = this.bookmarks.filter((bookmark) => bookmark.id !== _id);
-			// Refresh extension bookmmark panel
+			// Refresh extension bookmark panel
 			await this.refresh();
 		} catch (error) {
 			logger.error(error.stack ? error.stack : error);

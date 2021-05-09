@@ -16,15 +16,17 @@ export class QotdPanel {
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
 	private readonly _id: string;
+	private readonly _date: string | undefined;
 	private _disposables: vscode.Disposable[] = [];
 	private static panels: any = new Map();
 
-	public static createOrShow(extensionUri: vscode.Uri, _arguments?: { _id?: string; caption?: string }) {
+	public static createOrShow(extensionUri: vscode.Uri, _arguments?: { _id?: string; caption?: string, date?: string }) {
 		const logger = getLogger("QotdPanel");
 		const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
 
 		const _id = _arguments?._id || "qotd";
 		const title = _arguments?.caption || "Question of the day";
+		const date = _arguments?.date || undefined;
 		/**
 		 * This was a real headache!!
 		 * Conventional panel reveal code only works if you have one panel to show at a time
@@ -41,7 +43,7 @@ export class QotdPanel {
 		logger.info(`Creating panel for ${title}`);
 		const panel = vscode.window.createWebviewPanel(QotdPanel.viewType, title, column || vscode.ViewColumn.Active, this.getWebviewOptions(extensionUri));
 
-		const qotdPanel = new QotdPanel(panel, extensionUri, _id);
+		const qotdPanel = new QotdPanel(panel, extensionUri, _id, date);
 		this.panels.set(_id, qotdPanel);
 	}
 
@@ -49,7 +51,7 @@ export class QotdPanel {
 		return {
 			// Enable javascript in the webview
 			enableScripts: true,
-			// dont load the question again if users is just switching between existing panels.
+			// don't load the question again if users is just switching between existing panels.
 			retainContextWhenHidden: true,
 			// And restrict the webview to only loading content from our extension's `media` directory.
 			localResourceRoots: [vscode.Uri.joinPath(extensionUri, "media"), vscode.Uri.joinPath(extensionUri, "out/compiled")],
@@ -66,16 +68,17 @@ export class QotdPanel {
 		this.panels.set(_id, qotdPanel);
 	}
 
-	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, _id: string) {
+	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, _id: string, date?: string) {
 		this._panel = panel;
 		this._extensionUri = extensionUri;
 		this._id = _id;
+		this._date = date;
 
-		// Set the webview's initial html content
+		// Set the webView's initial html content
 		this._update();
 
 		// Listen for when the panel is disposed
-		// This happens when the user closes the panel or when the panel is closed programatically
+		// This happens when the user closes the panel or when the panel is closed programmatically
 		this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 	}
 
@@ -139,6 +142,20 @@ export class QotdPanel {
 					vscode.window.showErrorMessage(data.value);
 					break;
 				}
+
+				case "getQotdFromDate": {
+					vscode.window.showInformationMessage("Getting Previous question");
+					if (!data.value) {
+						return;
+					}
+					const { date } = data.value;
+
+					// Kill current panel
+					QotdPanel.kill('qotd');
+					QotdPanel.createOrShow(this._extensionUri, { date, caption: date });
+					break;
+				}
+
 			}
 		});
 	}
@@ -151,6 +168,7 @@ export class QotdPanel {
 			accessToken: await StateManager.getState("accessToken"),
 			bookmarkTreeItems: await StateManager.getState("bookmarkTreeItems"),
 			id: this._id,
+			date: this._date
 		};
 
 		// Uri to load styles into webview
