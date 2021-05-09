@@ -144,7 +144,6 @@ export class QotdPanel {
 				}
 
 				case "getQotdFromDate": {
-					vscode.window.showInformationMessage("Getting Previous question");
 					if (!data.value) {
 						return;
 					}

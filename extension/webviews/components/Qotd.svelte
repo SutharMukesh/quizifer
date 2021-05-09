@@ -44,7 +44,7 @@
 	};
 
 	function syncBookmarkState(_id: string, bookmarkTreeItems: Array<Bookmark>) {
-		tsvscode.postMessage({ type: "onDebug", value: "checking if qotd is bookmarked!" });
+		// tsvscode.postMessage({ type: "onDebug", value: "checking if qotd is bookmarked!" });
 		if (bookmarkTreeItems.some((bookmarkTreeItem: any) => bookmarkTreeItem.id == _id)) {
 			updateLocals({ bookmark: true });
 		} else {
@@ -58,7 +58,7 @@
 
 	async function getQotd(options: { accessToken?: string; id?: string; date?: string } = {}): Promise<any> {
 		const { accessToken, id, date } = options;
-		callProviderFunction({ type: "onDebug", value: `GetQotd for ${date}` });
+		// callProviderFunction({ type: "onDebug", value: `GetQotd for ${date}` });
 		// Set header for authorized Users
 		let headers = {};
 		if (accessToken) {
@@ -103,10 +103,10 @@
 
 		if (!accessToken) {
 			callProviderFunction({ type: "openSideBar", value: undefined });
-			callProviderFunction({ type: "onError", value: "Please Login to get previous question." });
+			callProviderFunction({ type: "onError", value: "Please Login to see other questions." });
 			return;
 		}
-		callProviderFunction({ type: "onDebug", value: `OnClickLeft date: ${date}` });
+		// callProviderFunction({ type: "onDebug", value: `Fetching you question for date: ${date}` });
 		const qotdDate = new Date(date);
 		const yesterday = new Date(qotdDate);
 
@@ -114,7 +114,7 @@
 		const yesterdayWithOffsetTimezoneFixed = new Date(yesterday.getTime() - yesterday.getTimezoneOffset() * 60000);
 		const dateToFetch = yesterdayWithOffsetTimezoneFixed.toISOString().split("T")[0].replaceAll("-", "/");
 
-		callProviderFunction({ type: "onDebug", value: `OnClickLeft dateToFetch: ${dateToFetch}` });
+		// callProviderFunction({ type: "onDebug", value: `OnClickLeft dateToFetch: ${dateToFetch}` });
 
 		callProviderFunction({ type: "getQotdFromDate", value: { date: dateToFetch } });
 	}
@@ -124,11 +124,10 @@
 
 		if (!accessToken) {
 			callProviderFunction({ type: "openSideBar", value: undefined });
-			callProviderFunction({ type: "onError", value: "Please Login to get previous question." });
+			callProviderFunction({ type: "onError", value: "Please Login to see other question." });
 			return;
 		}
 
-		tsvscode.postMessage({ type: "onInfo", value: `date: ${date}` });
 		const qotdDate = new Date(date);
 		const today = new Date();
 		const nextDate = new Date(qotdDate);
@@ -139,7 +138,6 @@
 		}
 		const nextDateWithOffsetTimezoneFixed = new Date(nextDate.getTime() - nextDate.getTimezoneOffset() * 60000);
 		const dateToFetch = nextDateWithOffsetTimezoneFixed.toISOString().split("T")[0].replaceAll("-", "/");
-		tsvscode.postMessage({ type: "onInfo", value: dateToFetch });
 
 		callProviderFunction({ type: "getQotdFromDate", value: { date: dateToFetch } });
 	}
@@ -166,7 +164,7 @@
 
 						if (accessToken) {
 							// for user that are Logged in
-							tsvscode.postMessage({ type: "onDebug", value: "Getting qotd with an accessToken" });
+							// tsvscode.postMessage({ type: "onDebug", value: "Getting qotd with an accessToken" });
 
 							const { _id, question, title, date } = await getQotd({ accessToken, id, date: dateToFetch });
 
@@ -176,7 +174,7 @@
 							syncBookmarkState(_id, bookmarkTreeItems);
 						} else {
 							// for user that are not logged in
-							tsvscode.postMessage({ type: "onDebug", value: "Getting qotd" });
+							// tsvscode.postMessage({ type: "onDebug", value: "Getting qotd" });
 
 							const responseTxt = await getQotd();
 
@@ -196,14 +194,16 @@
 </script>
 
 <div class="container">
-	<button class="go-left-container" on:click={onClickLeft}>Left</button>
+	<div class="side-container">
+		<button class="side-button" on:click={onClickLeft}>{"<"}</button>
+	</div>
 	<div class="content-div">
 		{#if locals.loading}
 			<style>
 				.content-div {
-					width: 600px;
+					width: 800px;
 					background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' version='1.1' width='575' height='6px'%3E %3Cstyle%3E circle { animation: ball 2.5s cubic-bezier(0.000, 1.000, 1.000, 0.000) infinite; fill: %23bbb; } %23balls { animation: balls 2.5s linear infinite; } %23circle2 { animation-delay: 0.1s; } %23circle3 { animation-delay: 0.2s; } %23circle4 { animation-delay: 0.3s; } %23circle5 { animation-delay: 0.4s; } @keyframes ball { from { transform: none; } 20% { transform: none; } 80% { transform: translateX(864px); } to { transform: translateX(864px); } } @keyframes balls { from { transform: translateX(-40px); } to { transform: translateX(30px); } } %3C/style%3E %3Cg id='balls'%3E %3Ccircle class='circle' id='circle1' cx='-115' cy='3' r='3'/%3E %3Ccircle class='circle' id='circle2' cx='-130' cy='3' r='3' /%3E %3Ccircle class='circle' id='circle3' cx='-145' cy='3' r='3' /%3E %3Ccircle class='circle' id='circle4' cx='-160' cy='3' r='3' /%3E %3Ccircle class='circle' id='circle5' cx='-175' cy='3' r='3' /%3E %3C/g%3E %3C/svg%3E") 50% no-repeat;
-					height: 200px;
+					height: 400px;
 				}
 			</style>{:else if locals.question}
 			<div class="bookmark">
@@ -220,7 +220,9 @@
 			<div>Somethings Wrong!</div>
 		{/if}
 	</div>
-	<button class="go-right-container" on:click={onClickRight}>Right</button>
+	<div class="side-container">
+		<button class="side-button" on:click={onClickRight}>{">"}</button>
+	</div>
 </div>
 <footer>
 	<div class="logo-trademark">
