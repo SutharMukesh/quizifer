@@ -1,5 +1,8 @@
 # Change Log
 
+## V2.0.6
+- Support to fetch previous question in case of user missing a QOTD.
+
 ## V2.0.5
 - Fix Annoying multiple notifications
 ## V2.0.4
