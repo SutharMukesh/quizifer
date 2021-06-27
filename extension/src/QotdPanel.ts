@@ -16,17 +16,17 @@ export class QotdPanel {
 	private readonly _panel: vscode.WebviewPanel;
 	private readonly _extensionUri: vscode.Uri;
 	private readonly _id: string;
-	private readonly _date: string | undefined;
+	private readonly _serialNo: number | undefined;
 	private _disposables: vscode.Disposable[] = [];
 	private static panels: any = new Map();
 
-	public static createOrShow(extensionUri: vscode.Uri, _arguments?: { _id?: string; caption?: string, date?: string }) {
+	public static createOrShow(extensionUri: vscode.Uri, _arguments?: { _id?: string; caption?: string, serialNo?: number }) {
 		const logger = getLogger("QotdPanel");
 		const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
-
 		const _id = _arguments?._id || "qotd";
 		const title = _arguments?.caption || "Question of the day";
-		const date = _arguments?.date || undefined;
+		const serialNo = _arguments?.serialNo;
+		logger.debug(`inside createOrShow: ${JSON.stringify(serialNo)}`);
 		/**
 		 * This was a real headache!!
 		 * Conventional panel reveal code only works if you have one panel to show at a time
@@ -43,7 +43,7 @@ export class QotdPanel {
 		logger.info(`Creating panel for ${title}`);
 		const panel = vscode.window.createWebviewPanel(QotdPanel.viewType, title, column || vscode.ViewColumn.Active, this.getWebviewOptions(extensionUri));
 
-		const qotdPanel = new QotdPanel(panel, extensionUri, _id, date);
+		const qotdPanel = new QotdPanel(panel, extensionUri, _id, serialNo);
 		this.panels.set(_id, qotdPanel);
 	}
 
@@ -68,11 +68,11 @@ export class QotdPanel {
 		this.panels.set(_id, qotdPanel);
 	}
 
-	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, _id: string, date?: string) {
+	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, _id: string, serialNo?: number) {
 		this._panel = panel;
 		this._extensionUri = extensionUri;
 		this._id = _id;
-		this._date = date;
+		this._serialNo = serialNo;
 
 		// Set the webView's initial html content
 		this._update();
@@ -143,15 +143,15 @@ export class QotdPanel {
 					break;
 				}
 
-				case "getQotdFromDate": {
+				case "getQotdFromSerialNo": {
 					if (!data.value) {
 						return;
 					}
-					const { date } = data.value;
-
+					const { serialNo } = data.value;
+					logger.debug(`inside getQotdFrom SerialNO: ${JSON.stringify(data.value)}: ${data.value.serialNo}: ${serialNo}`)
 					// Kill current panel
 					QotdPanel.kill('qotd');
-					QotdPanel.createOrShow(this._extensionUri, { date, caption: date });
+					QotdPanel.createOrShow(this._extensionUri, { serialNo: serialNo, caption: `#${serialNo}` });
 					break;
 				}
 
@@ -167,7 +167,7 @@ export class QotdPanel {
 			accessToken: await StateManager.getState("accessToken"),
 			bookmarkTreeItems: await StateManager.getState("bookmarkTreeItems"),
 			id: this._id,
-			date: this._date
+			serialNo: this._serialNo
 		};
 
 		// Uri to load styles into webview

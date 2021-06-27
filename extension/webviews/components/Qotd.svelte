@@ -10,7 +10,8 @@
 		loading: boolean;
 		upvotes: number;
 		downvotes: number;
-		date: string; // YYYY/MM/DD
+		serialNo: number;
+		todaysSerialNo: number; // todays question serial number
 	}
 	let quiziferLogo = quiziferLogoUri;
 	const svg = {
@@ -56,8 +57,8 @@
 		return tsvscode.postMessage(options);
 	}
 
-	async function getQotd(options: { accessToken?: string; id?: string; date?: string } = {}): Promise<any> {
-		const { accessToken, id, date } = options;
+	async function getQotd(options: { accessToken?: string; id?: string; serialNo?: number } = {}): Promise<any> {
+		const { accessToken, id, serialNo: serial_no } = options;
 		// callProviderFunction({ type: "onDebug", value: `GetQotd for ${date}` });
 		// Set header for authorized Users
 		let headers = {};
@@ -68,12 +69,12 @@
 		}
 
 		let qotdApiUrl = QOTD_API_BASE_URL;
-		if (date && accessToken) {
-			qotdApiUrl += `?${new URLSearchParams({ date })}`;
+		if (serial_no !== null && serial_no !== undefined && accessToken) {
+			qotdApiUrl += `?${new URLSearchParams({ serial_no })}`;
 		} else if (id) {
 			qotdApiUrl += `?${new URLSearchParams({ id })}`;
 		}
-
+		console.log({ qotdApiUrl });
 		const response = await fetch(qotdApiUrl, {
 			headers,
 		});
@@ -84,7 +85,7 @@
 		// Send JSON Parsed Response only in case of auth users
 		if (accessToken) {
 			const responseObj = JSON.parse(responseTxt);
-
+			console.log({ responseObj });
 			if (response.status !== 200) {
 				throw new Error(`<h3>${responseObj.message ? responseObj.message : responseObj}</h3>`);
 			}
@@ -99,47 +100,37 @@
 	}
 
 	async function onClickLeft() {
-		const { accessToken, date } = locals;
+		const { accessToken, serialNo } = locals;
 
 		if (!accessToken) {
 			callProviderFunction({ type: "openSideBar", value: undefined });
 			callProviderFunction({ type: "onError", value: "Please Login to see other questions." });
 			return;
 		}
-		// callProviderFunction({ type: "onDebug", value: `Fetching you question for date: ${date}` });
-		const qotdDate = new Date(date);
-		const yesterday = new Date(qotdDate);
 
-		yesterday.setDate(yesterday.getDate() - 1);
-		const yesterdayWithOffsetTimezoneFixed = new Date(yesterday.getTime() - yesterday.getTimezoneOffset() * 60000);
-		const dateToFetch = yesterdayWithOffsetTimezoneFixed.toISOString().split("T")[0].replaceAll("-", "/");
-
-		// callProviderFunction({ type: "onDebug", value: `OnClickLeft dateToFetch: ${dateToFetch}` });
-
-		callProviderFunction({ type: "getQotdFromDate", value: { date: dateToFetch } });
+		const value = {
+			serialNo: serialNo - 1,
+		};
+		return callProviderFunction({ type: "getQotdFromSerialNo", value });
 	}
 
 	async function onClickRight() {
-		const { accessToken, date } = locals;
-
+		const { accessToken, todaysSerialNo, serialNo } = locals;
+		console.log({ todaysSerialNo, serialNo, accessToken });
 		if (!accessToken) {
 			callProviderFunction({ type: "openSideBar", value: undefined });
 			callProviderFunction({ type: "onError", value: "Please Login to see other question." });
 			return;
 		}
 
-		const qotdDate = new Date(date);
-		const today = new Date();
-		const nextDate = new Date(qotdDate);
-		nextDate.setDate(nextDate.getDate() + 1);
-
-		if (nextDate > today) {
+		if (serialNo >= todaysSerialNo) {
 			return callProviderFunction({ type: "onError", value: "Sorry you have to wait till tomorrow." });
 		}
-		const nextDateWithOffsetTimezoneFixed = new Date(nextDate.getTime() - nextDate.getTimezoneOffset() * 60000);
-		const dateToFetch = nextDateWithOffsetTimezoneFixed.toISOString().split("T")[0].replaceAll("-", "/");
 
-		callProviderFunction({ type: "getQotdFromDate", value: { date: dateToFetch } });
+		const value = {
+			serialNo: serialNo + 1,
+		};
+		return callProviderFunction({ type: "getQotdFromSerialNo", value });
 	}
 
 	onMount(async () => {
@@ -159,16 +150,15 @@
 
 				case "get-qotd":
 					try {
-						const { accessToken, id, bookmarkTreeItems, date: dateToFetch } = message.value;
+						const { accessToken, id, bookmarkTreeItems, serialNo } = message.value;
 						locals = { ...locals, ...{ accessToken } };
-
+						console.log({ serialNo });
 						if (accessToken) {
 							// for user that are Logged in
 							// tsvscode.postMessage({ type: "onDebug", value: "Getting qotd with an accessToken" });
 
-							const { _id, question, title, date } = await getQotd({ accessToken, id, date: dateToFetch });
-
-							updateLocals({ _id, question, title, date });
+							const { _id, question, title, serial_no, todays_serial_no } = await getQotd({ accessToken, id, serialNo });
+							updateLocals({ _id, question, title, serialNo: serial_no, todaysSerialNo: todays_serial_no });
 
 							// check current QOTD is present in bookmark.
 							syncBookmarkState(_id, bookmarkTreeItems);
