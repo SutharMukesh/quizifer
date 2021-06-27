@@ -14,6 +14,11 @@ const qotdSchema = mongoose.Schema({
 	title: {
 		type: String,
 	},
+	serial_no: {
+		type: Number,
+		unique: true,
+		required: true
+	}
 });
 
 module.exports = mongoose.model("Qotd", qotdSchema);

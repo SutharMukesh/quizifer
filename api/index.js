@@ -9,6 +9,8 @@ const passport = require("passport");
 const stats = require("./routes/stats");
 const qotd = require("./routes/qotd");
 const user = require("./routes/user");
+const qpointer = require("./routes/qpointer");
+
 require("./database");
 
 const app = express();
@@ -21,6 +23,7 @@ app.use(morgan("combined"));
 
 app.use("/qotd", qotd);
 app.use("/stats", stats);
+app.use("/q-pointer", qpointer)
 app.use(user);
 
 // Error Handling Middleware - it should be the last middleware added in express.

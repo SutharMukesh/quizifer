@@ -36,6 +36,10 @@ functions:
           path: /stats/{event}
           method: PUT
           cors: true
+      - http: 
+          path: /q-pointer
+          method: GET
+          cors: true
     
 custom:
   warmup:
