@@ -6,7 +6,6 @@ const getQPointer = async () => {
 };
 
 const setQPointer = async (qPointer) => {
-    console.log({ qPointer })
     const qPointerModel = new QPointer(qPointer);
     qPointer = await qPointerModel.save();
     return qPointer;

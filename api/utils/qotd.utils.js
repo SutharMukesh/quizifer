@@ -1,15 +1,6 @@
 const Qotd = require("../models/Qotd");
 const parser = require("./parser");
-
-/**
- * Get QOTD in HTML format
- * @returns {String} Html string.
- */
-async function getQuestionByDate(date) {
-    const questionData = await Qotd.findOne({ date });
-    questionData.question = parser(questionData.question);
-    return questionData;
-}
+const { getQPointer } = require("./qpointer.utils");
 
 /**
  * Gets Question In md format for an id
@@ -17,8 +8,17 @@ async function getQuestionByDate(date) {
  * @returns {String} - Question md.
  */
 async function getQuestionById(id) {
-    const questionData = await Qotd.findById(id);
+    let questionData = await Qotd.findById(id);
+    if (!questionData) {
+        throw new Error('no question found!');
+    }
+    questionData = questionData.toJSON()
+
     questionData.question = parser(questionData.question);
+
+    const qPointer = await getQPointer();
+    questionData.todays_serial_no = qPointer.serial_no;
+
     return questionData;
 }
 
@@ -51,21 +51,26 @@ const rotateNumbers = (number, total) => {
  * @returns {String} Html string.
  */
 async function getQuestionBySerialNo(serialNo) {
+    const qPointer = await getQPointer();
     if (!serialNo) {
-        throw new Error('serialNo is required');
+        serialNo = qPointer.serial_no;
     }
+
     serialNo = Number(serialNo);
 
-    const qotdTotalCount = await Qotd.count()
+    const qotdTotalCount = await Qotd.countDocuments();
 
-    serialNo = rotateNumbers(serialNo, qotdTotalCount);
+    const rotatedSerialNo = rotateNumbers(serialNo, qotdTotalCount);
 
-    const questionData = await Qotd.findOne({ serial_no: serialNo });
+    let questionData = await Qotd.findOne({ serial_no: rotatedSerialNo });
     if (!questionData) {
         throw new Error('no question found!');
     }
+    questionData = questionData.toJSON()
 
     questionData.question = parser(questionData.question);
+    questionData.serial_no = serialNo;
+    questionData.todays_serial_no = qPointer.serial_no;
     return questionData;
 }
 
@@ -75,7 +80,6 @@ const getQotdTotalCount = async () => {
 }
 
 module.exports = {
-    getQuestionByDate,
     getQuestionById,
     rotateNumbers,
     getQuestionBySerialNo,
