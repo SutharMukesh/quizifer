@@ -1,5 +1,8 @@
 # Change Log
 
+## V2.1.0
+- Add support for rotating questions.
+
 ## V2.0.6
 - Support to fetch previous question in case of user missing a QOTD.
 
